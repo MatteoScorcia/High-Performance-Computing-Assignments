@@ -1,4 +1,4 @@
-#bytes #repetitions,t[usec],Mbytes/sec
+#bytes,#repetitions,t[usec],Mbytes/sec
 0,1000,0.20,0.00
 1,1000,0.19,5.15
 2,1000,0.19,10.55
