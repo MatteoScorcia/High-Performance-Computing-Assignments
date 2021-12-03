@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <mpi.h>
+#include <math.h>
 
 void execute_mpi_ring(int numprocs, FILE *fptr);
 
@@ -15,6 +16,7 @@ int main(int argc, char *argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
 	int iterations = 100;
+	double time_per_iteration[iterations];
 	double total_time = 0;
 	for (int i = 0; i < iterations; i++)
 	{
@@ -22,18 +24,24 @@ int main(int argc, char *argv[])
 		execute_mpi_ring(numprocs, fptr);
 		double elapsed_time = MPI_Wtime() - start_time;
 
-		double total_time_iteration;
-		MPI_Reduce(&elapsed_time, &total_time_iteration, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce(&elapsed_time, &time_per_iteration[i], 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
 		if (my_rank == 0)
 		{
-			total_time += total_time_iteration;
+			total_time += time_per_iteration[i];
 		}
 	}
 
 	if (my_rank == 0)
 	{
-		fprintf(fptr, "%10.8f,%d\n", total_time / iterations, numprocs);
+		double mean = total_time / iterations;
+		double stddev = 0.0;
+		for (int i = 0; i < iterations; i++)
+		{
+			stddev += pow(time_per_iteration[i] - mean, 2);
+		}
+
+		fprintf(fptr, "%10.8f,%10.8f,%d,%d\n", mean, stddev, iterations, numprocs);
 	}
 
 	fclose(fptr);
