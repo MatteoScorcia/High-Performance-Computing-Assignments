@@ -8,9 +8,9 @@ void fillRandomToMatrix(int x_size, int y_size, int z_size, double *matrix);
 
 int main(int argc, char *argv[])
 {
-	if (argc != 4)
+	if (argc != 6)
 	{
-		printf("Usage: mpirun -np 'number_of_processors' %s 'x_dimension' 'y_dimension' 'z_dimension'", argv[0]);
+		printf("Usage: mpirun -np 'number_of_processors' %s 'x_dimension' 'y_dimension' 'z_dimension' 'x_topology_dimension' 'y_topology_dimension'", argv[0]);
 		return 1;
 	}
 
@@ -25,10 +25,14 @@ int main(int argc, char *argv[])
 
 	int matrix_size, matrix_chunk_size;
 	int x_size, y_size, z_size;
+	int x_topo_dim, y_topo_dim;
 
 	x_size = atoi(argv[1]);
 	y_size = atoi(argv[2]);
 	z_size = atoi(argv[3]);
+
+	x_topo_dim = atoi(argv[4]);
+	y_topo_dim = atoi(argv[5]);
 
 	matrix_size = x_size * y_size * z_size;
 	matrix_chunk_size = matrix_size / numprocs;
@@ -41,9 +45,9 @@ int main(int argc, char *argv[])
 	double *chunk_matrixB = malloc(matrix_chunk_size * sizeof(double));
 	double *chunk_matrixC = malloc(matrix_chunk_size * sizeof(double));
 
-	int ndims = 1;
-	int dims[1] = {0};
-	int periods[1] = {0};
+	int ndims = 2;
+	int dims[2] = {x_topo_dim, y_topo_dim};
+	int periods[2] = {0, 0};
 	int reorder = 1;
 
 	MPI_Comm matrix_communicator;
