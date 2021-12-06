@@ -14,8 +14,6 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	srand48(SEED);
-
 	int numprocs;
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
@@ -52,12 +50,24 @@ int main(int argc, char *argv[])
 
 	if (my_rank == root)
 	{
+		srand48(SEED);
 		fillRandomToMatrix(x_size, y_size, z_size, matrixA);
 		fillRandomToMatrix(x_size, y_size, z_size, matrixB);
 
-		MPI_Scatter(matrixA, matrix_chunk_size, MPI_DOUBLE, chunk_matrixA, matrix_chunk_size, MPI_DOUBLE, root, matrix_communicator);
-		MPI_Scatter(matrixB, matrix_chunk_size, MPI_DOUBLE, chunk_matrixB, matrix_chunk_size, MPI_DOUBLE, root, matrix_communicator);
+		// for (int i = 0; i < matrix_chunk_size; i++)
+		// {
+		// 	printf("%f ", matrixA[i]);
+		// }
+		// printf("\n");
+
+		// for (int i = 0; i < matrix_chunk_size; i++)
+		// {
+		// 	printf("%f ", matrixB[i]);
+		// }
+		// printf("\n");
 	}
+	MPI_Scatter(matrixA, matrix_chunk_size, MPI_DOUBLE, chunk_matrixA, matrix_chunk_size, MPI_DOUBLE, root, matrix_communicator);
+	MPI_Scatter(matrixB, matrix_chunk_size, MPI_DOUBLE, chunk_matrixB, matrix_chunk_size, MPI_DOUBLE, root, matrix_communicator);
 
 	for (int i = 0; i < matrix_chunk_size; i++)
 	{
@@ -65,6 +75,15 @@ int main(int argc, char *argv[])
 	}
 
 	MPI_Gather(chunk_matrixC, matrix_chunk_size, MPI_DOUBLE, matrixC, matrix_chunk_size, MPI_DOUBLE, root, matrix_communicator);
+
+	// if (my_rank == root)
+	// {
+	// 	for (int i = 0; i < matrix_chunk_size; i++)
+	// 	{
+	// 		printf("%f ", matrixC[i]);
+	// 	}
+	// 	printf("\n");
+	// }
 
 	free(matrixA);
 	free(matrixB);
