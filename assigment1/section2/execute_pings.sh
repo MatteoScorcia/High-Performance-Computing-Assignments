@@ -1,5 +1,5 @@
 #! /bin/sh
-module load openmpi-4.1.1+gnu-9.3.0
+module load openmpi
 
 for type in core socket node
 	do for i in ob1 ucx
