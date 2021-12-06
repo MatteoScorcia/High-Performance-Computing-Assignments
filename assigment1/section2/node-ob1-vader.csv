@@ -1,0 +1,1 @@
+#mpirun  --map-by node --mca pml ob1 --mca btl self,vader -np 2 --report-bindings ./IMB-MPI1 PingPong -msglog 28
