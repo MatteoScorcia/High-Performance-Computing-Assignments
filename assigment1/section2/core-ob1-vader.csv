@@ -1,5 +1,5 @@
 #mpirun  --map-by core --mca pml ob1 --mca btl self,vader -np 2 --report-bindings ./IMB-MPI1 PingPong -msglog 28
-#bytes #repetitions,t[usec],Mbytes/sec
+#bytes,#repetitions,t[usec],Mbytes/sec
 0,1000,0.24,0.00
 1,1000,0.28,3.57
 2,1000,0.28,7.15
