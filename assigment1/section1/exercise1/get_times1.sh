@@ -6,4 +6,3 @@ END=24
 for ((i=2;i<=END;i++));
 do
 	mpirun -np $i ./build/ring_time
-done
