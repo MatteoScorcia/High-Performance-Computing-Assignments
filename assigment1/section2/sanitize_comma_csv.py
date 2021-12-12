@@ -9,15 +9,13 @@ def line_prepender(filename, line):
 
 
 if __name__ == '__main__':
-    directory = os.path.realpath("assigment1/section2/csv")
+    directory = "1csv"
     for filename in os.listdir(directory):
         full_path = os.path.join(directory, filename)
 
         with open(full_path, "r") as f:
-            contents = f.readlines()
-
-        contents.insert(6, ",")
+            lines = f.readlines()
+            lines[0] = lines[0].replace(' ', ',')
 
         with open(full_path, "w") as f:
-            contents = "".join(contents)
-            f.write(contents)
+            f.writelines(lines)

@@ -3,6 +3,7 @@ import os
 import matplotlib.pyplot as plt
 from numpy import arange
 from scipy.optimize import curve_fit
+import re
 
 
 def objective(x_data, c, bandwidth):
@@ -50,4 +51,12 @@ if __name__ == '__main__':
         df['Mbytes/sec computed'] = Mbytes_comp
 
         result_full_path = os.path.join("results/", filename)
-        df.to_csv(result_full_path, sep=",", index=False)
+        df.to_csv(result_full_path, sep="/t", index=False)
+
+        str = os.path.splitext(filename).__str__()
+        chunks = re.split('[-]', str)
+
+        # //todo aggiungi le 3 righe di commenti
+        # "#mpirun  --map-by $type --mca pml $i --mca btl self,$j -np 2 --report-bindings ./IMB-MPI1 PingPong -msglog 28"
+        # list of nodes involved
+        # lamba -> df['t[usec] computed'][0], bandwith -> df['Mbytes/sec computed'][-1] (computed by fitting data)
