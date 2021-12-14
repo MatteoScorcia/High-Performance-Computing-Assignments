@@ -10,13 +10,38 @@ def objective(x_data, c, bandwidth):
     return c + (x_data / bandwidth)
 
 
+def removeHeadersFromCSV(full_path):
+    with open(full_path, "r") as f:
+        lines = f.readlines()
+
+    with open(full_path, "w") as f:
+        f.writelines(lines[3:])
+
+    return lines[0:3], lines[3:]
+
+
+def insertHeadersToCSV(headers, result_full_path):
+    with open(result_full_path, "r") as f:
+        lines = f.readlines()
+
+    with open(result_full_path, "w") as f:
+        for index, head in enumerate(headers):
+            lines.insert(index, head)
+        f.writelines(lines)
+
+
 if __name__ == '__main__':
 
-    directory = "1csv"
+    directory = "csv/openmpi"
     for filename in os.listdir(directory):
         full_path = os.path.join(directory, filename)
         print(full_path)
+        headers, lines = removeHeadersFromCSV(
+            full_path)  # todo: controlla se funziona
+        print(headers, lines[0])
         df = pd.read_csv(full_path)
+        insertHeadersToCSV(headers, full_path)
+        print(df)
 
         x_data, y = df['#bytes'].values, df['t[usec]'].values
         tick_list = list(range(len(x_data - 1)))
@@ -42,19 +67,23 @@ if __name__ == '__main__':
         plt.legend(loc="upper left")
 
         plot_filename = os.path.splitext(filename)[0]+'.jpg'
-        plot_full_path = os.path.join("plots/", plot_filename)
+        plot_full_path = os.path.join("plots/openmpi", plot_filename)
         plt.savefig(plot_full_path)
         plt.clf()
 
-        df['t[usec] computed'] = [round(number, 2) for number in y_estimated]
+        df['t[usec] (computed)'] = [round(number, 2) for number in y_estimated]
         Mbytes_comp = [round(number, 2) for number in (x_data / y_estimated)]
-        df['Mbytes/sec computed'] = Mbytes_comp
+        df['Mbytes/sec (computed)'] = Mbytes_comp
 
-        result_full_path = os.path.join("results/", filename)
-        df.to_csv(result_full_path, sep="/t", index=False)
+        result_full_path = os.path.join("results/openmpi", filename)
+        df.to_csv(result_full_path, sep="\t", index=False)
 
-        str = os.path.splitext(filename).__str__()
-        chunks = re.split('[-]', str)
+        headers[2] = '#lambda[usec] (computed) -> ' + \
+            str(df['t[usec] (computed)'].iloc[0]) + \
+            ', bandwidth[Mbytes/sec] (computed) -> ' + \
+            str(df['Mbytes/sec (computed)'].iloc[-1]) + '\n'
+
+        insertHeadersToCSV(headers, result_full_path)
 
         # //todo aggiungi le 3 righe di commenti
         # "#mpirun  --map-by $type --mca pml $i --mca btl self,$j -np 2 --report-bindings ./IMB-MPI1 PingPong -msglog 28"
