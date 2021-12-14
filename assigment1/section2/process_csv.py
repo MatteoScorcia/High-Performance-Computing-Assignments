@@ -35,13 +35,13 @@ if __name__ == '__main__':
     directory = "csv/openmpi"
     for filename in os.listdir(directory):
         full_path = os.path.join(directory, filename)
-        print(full_path)
+
         headers, lines = removeHeadersFromCSV(
-            full_path)  # todo: controlla se funziona
-        print(headers, lines[0])
+            full_path)
+
         df = pd.read_csv(full_path)
+
         insertHeadersToCSV(headers, full_path)
-        print(df)
 
         x_data, y = df['#bytes'].values, df['t[usec]'].values
         tick_list = list(range(len(x_data - 1)))
