@@ -18,17 +18,17 @@ int main(int argc, char *argv[])
 	int iterations = 100;
 	double time_per_iteration[iterations];
 	double total_time = 0;
+	double start_time, elapsed_time;
 	for (int i = 0; i < iterations; i++)
 	{
-		double start_time = MPI_Wtime();
+		start_time = MPI_Wtime();
 		execute_mpi_ring(numprocs, fptr);
-		double elapsed_time = MPI_Wtime() - start_time;
-
-		MPI_Reduce(&elapsed_time, &time_per_iteration[i], 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+		elapsed_time = MPI_Wtime() - start_time;
 
 		if (my_rank == 0)
 		{
-			total_time += time_per_iteration[i];
+			time_per_iteration[i] = elapsed_time;
+			total_time += elapsed_time;
 		}
 	}
 
