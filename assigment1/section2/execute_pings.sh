@@ -5,10 +5,10 @@ for type in core socket node
 		 do for j in tcp vader
 			do
 				namefile = "$type-$i-$j"
-				if ["$namefile" != "node-ob1-vader"]
+				if ["$namefile" != "node-ob1-vader"];
 				then
 					echo "mpirun  --map-by $type --mca pml $i --mca btl self,$j -np 2 ./IMB-MPI1 PingPong -msglog 29" > "csv/openmpi/$namefile".csv
-					if ["$type" == "node"]
+					if ["$type" == "node"];
 					then
 						echo "$1, $2" >> "csv/openmpi/$namefile".csv
 					else
