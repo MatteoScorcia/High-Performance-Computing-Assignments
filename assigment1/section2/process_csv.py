@@ -84,8 +84,3 @@ if __name__ == '__main__':
             str(df['Mbytes/sec (computed)'].iloc[-1]) + '\n'
 
         insertHeadersToCSV(headers, result_full_path)
-
-        # //todo aggiungi le 3 righe di commenti
-        # "#mpirun  --map-by $type --mca pml $i --mca btl self,$j -np 2 --report-bindings ./IMB-MPI1 PingPong -msglog 28"
-        # list of nodes involved
-        # lamba -> df['t[usec] computed'][0], bandwith -> df['Mbytes/sec computed'][-1] (computed by fitting data)
