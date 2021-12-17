@@ -76,7 +76,7 @@ if __name__ == '__main__':
         df['Mbytes/sec (computed)'] = Mbytes_comp
 
         result_full_path = os.path.join("results/openmpi", filename)
-        df.to_csv(result_full_path, sep="\t", index=False)
+        df.to_csv(result_full_path, sep=",", index=False)
 
         headers[2] = '#lambda[usec] (computed) -> ' + \
             str(df['t[usec] (computed)'].iloc[0]) + \
