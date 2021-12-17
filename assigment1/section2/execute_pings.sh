@@ -2,12 +2,14 @@
 #just call di script with the first 2 arguments ($1, $2) as name of nodes involved
 
 module load openmpi-4.1.1+gnu-9.3.0
+
 for type in core socket node
 	do for i in ob1 ucx
 		 do for j in tcp vader
+		 	filename="$type-$i-$j"
+		 	mkdir -p "csv/openmpi/$filename"
 			do for iteration in {1..50}
 				do
-					filename="$type-$i-$j"
 					if [ "$filename" != "node-ob1-vader" ];
 					then
 						echo "mpirun  --map-by $type --mca pml $i --mca btl self,$j -np 2 ./IMB-MPI1 PingPong -msglog 29" > "csv/openmpi/$filename/$filename-$iteration".csv

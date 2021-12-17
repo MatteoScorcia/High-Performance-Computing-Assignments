@@ -7,8 +7,9 @@ module load intel
 for j in tcp shm
 	do 
 		do for iteration in {1..50}
+		filename="core-$j"
+		mkdir -p "csv/intel/$filename"
 			do
-				filename="node-$j"
 				echo "mpiexec -n 2 -genv I_MPI_PIN_PROCESSOR_LIST=0,2 -genv I_MPI_OFI_PROVIDER $j ./IMB-MPI1 PingPong -msglog 29" > "csv/intel/$filename/$filename-$iteration".csv
 				echo "$1" >> "csv/intel/$filename/$filename-$iteration".csv 
 				echo "lamba, bandwith computed by fitting data" >> "csv/intel/$filename/$filename-$iteration".csv  
@@ -19,8 +20,9 @@ for j in tcp shm
 for j in tcp shm
 	do 
 		do for iteration in {1..50}
+		filename="socket-$j"
+		mkdir -p "csv/intel/$filename"
 			do
-				filename="node-$j"
 				echo "mpiexec -n 2 -genv I_MPI_PIN_PROCESSOR_LIST=0,1 -genv I_MPI_OFI_PROVIDER $j ./IMB-MPI1 PingPong -msglog 29" > "csv/intel/$filename/$filename-$iteration".csv 
 				echo "$1" >> "csv/intel/$filename/$filename-$iteration".csv 
 				echo "lamba, bandwith computed by fitting data" >> "csv/intel/$filename/$filename-$iteration".csv 
@@ -31,8 +33,9 @@ for j in tcp shm
 for j in tcp shm
 	do 
 		do for iteration in {1..50}
+			filename="node-$j"
+			mkdir -p "csv/intel/$filename"
 			do
-				filename="node-$j"
 				echo "mpiexec -n 2 -ppn 1 -genv I_MPI_OFI_PROVIDER $j ./IMB-MPI1 PingPong -msglog 29" > "csv/intel/$filename/$filename-$iteration".csv 
 				echo "$1, $2" >> "csv/intel/$filename/$filename-$iteration".csv 
 				echo "lamba, bandwith computed by fitting data" >> "csv/intel/$filename/$filename-$iteration".csv 
