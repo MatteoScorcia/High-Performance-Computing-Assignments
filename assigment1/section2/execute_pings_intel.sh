@@ -13,7 +13,8 @@ for j in tcp shm
 				echo "mpiexec -n 2 -genv I_MPI_PIN_PROCESSOR_LIST=0,2 -genv I_MPI_OFI_PROVIDER $j ./IMB-MPI1 PingPong -msglog 29" > "csv/intel/$filename/$filename-$iteration".csv
 				echo "$1" >> "csv/intel/$filename/$filename-$iteration".csv 
 				echo "lamba, bandwith computed by fitting data" >> "csv/intel/$filename/$filename-$iteration".csv  
-				mpiexec -n 2 -genv I_MPI_PIN_PROCESSOR_LIST=0,2 -genv I_MPI_OFI_PROVIDER $j ~/mpi-bench/mpi-benchmarks/src_c/IMB-MPI1 PingPong -msglog 29 2>/dev/null | grep -v ^\# | grep -v '^$' | tr -s ' ' | sed 's/  */,/g' | cut -c 2- >> "csv/intel/$filename/$filename-$iteration".csv 
+				mpiexec -n 2 -genv I_MPI_PIN_PROCESSOR_LIST=0,2 -genv I_MPI_OFI_PROVIDER $j ~/mpi-bench/mpi-benchmarks/src_c/IMB-MPI1 PingPong -msglog 29 2>/dev/null | grep -v ^\# | grep -v '^$' | tr -s ' ' | sed 's/  */,/g' | cut -c 2- >> "csv/intel/$filename/$filename-$iteration".csv
+				echo "$filename-$iteration" 
 			done
 		done
 
@@ -27,6 +28,7 @@ for j in tcp shm
 				echo "$1" >> "csv/intel/$filename/$filename-$iteration".csv 
 				echo "lamba, bandwith computed by fitting data" >> "csv/intel/$filename/$filename-$iteration".csv 
 				mpiexec -n 2 -genv I_MPI_PIN_PROCESSOR_LIST=0,1 -genv I_MPI_OFI_PROVIDER $j ~/mpi-bench/mpi-benchmarks/src_c/IMB-MPI1 PingPong -msglog 29 2>/dev/null | grep -v ^\# | grep -v '^$' | tr -s ' ' | sed 's/  */,/g' | cut -c 2- >> "csv/intel/$filename/$filename-$iteration".csv 
+				echo "$filename-$iteration"
 			done
 		done
 
@@ -40,6 +42,7 @@ for j in tcp shm
 				echo "$1, $2" >> "csv/intel/$filename/$filename-$iteration".csv 
 				echo "lamba, bandwith computed by fitting data" >> "csv/intel/$filename/$filename-$iteration".csv 
 				mpiexec -n 2 -ppn 1 -genv I_MPI_OFI_PROVIDER $j ~/mpi-bench/mpi-benchmarks/src_c/IMB-MPI1 PingPong -msglog 29 2>/dev/null | grep -v ^\# | grep -v '^$' | tr -s ' ' | sed 's/  */,/g' | cut -c 2- >> "csv/intel/$filename/$filename-$iteration".csv 
+				echo "$filename-$iteration"
 			done
 		done
 
