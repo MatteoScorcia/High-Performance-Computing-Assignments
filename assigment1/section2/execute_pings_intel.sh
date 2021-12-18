@@ -4,12 +4,12 @@
 module load openmpi-4.1.1+gnu-9.3.0
 module load intel
 
-for j in tcp shm
-	do 
+for j in tcp shm 
 		do for iteration in {1..5}
-		filename="core-$j"
-		mkdir -p "csv/intel/$filename"
-			do
+			do 
+				filename="core-$j"
+				mkdir -p "csv/intel/$filename"
+			
 				echo "mpiexec -n 2 -genv I_MPI_PIN_PROCESSOR_LIST=0,2 -genv I_MPI_OFI_PROVIDER $j ./IMB-MPI1 PingPong -msglog 29" > "csv/intel/$filename/$filename-$iteration".csv
 				echo "$1" >> "csv/intel/$filename/$filename-$iteration".csv 
 				echo "lamba, bandwith computed by fitting data" >> "csv/intel/$filename/$filename-$iteration".csv  
@@ -21,9 +21,10 @@ for j in tcp shm
 for j in tcp shm
 	do 
 		do for iteration in {1..5}
-		filename="socket-$j"
-		mkdir -p "csv/intel/$filename"
-			do
+			do 
+				filename="socket-$j"
+				mkdir -p "csv/intel/$filename"
+
 				echo "mpiexec -n 2 -genv I_MPI_PIN_PROCESSOR_LIST=0,1 -genv I_MPI_OFI_PROVIDER $j ./IMB-MPI1 PingPong -msglog 29" > "csv/intel/$filename/$filename-$iteration".csv 
 				echo "$1" >> "csv/intel/$filename/$filename-$iteration".csv 
 				echo "lamba, bandwith computed by fitting data" >> "csv/intel/$filename/$filename-$iteration".csv 
@@ -35,9 +36,10 @@ for j in tcp shm
 for j in tcp shm
 	do 
 		do for iteration in {1..5}
-			filename="node-$j"
-			mkdir -p "csv/intel/$filename"
-			do
+			do 
+				filename="node-$j"
+				mkdir -p "csv/intel/$filename"
+			
 				echo "mpiexec -n 2 -ppn 1 -genv I_MPI_OFI_PROVIDER $j ./IMB-MPI1 PingPong -msglog 29" > "csv/intel/$filename/$filename-$iteration".csv 
 				echo "$1, $2" >> "csv/intel/$filename/$filename-$iteration".csv 
 				echo "lamba, bandwith computed by fitting data" >> "csv/intel/$filename/$filename-$iteration".csv 

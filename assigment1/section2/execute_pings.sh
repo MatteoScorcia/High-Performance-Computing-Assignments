@@ -6,7 +6,7 @@ module load openmpi-4.1.1+gnu-9.3.0
 for type in core socket node
 	do for i in ob1 ucx
 		 do for j in tcp vader
-		 	do 
+		    do 
 		 		filename="$type-$i-$j"
 		 		mkdir -p "csv/openmpi/$filename"
 				for iteration in {1..5}
