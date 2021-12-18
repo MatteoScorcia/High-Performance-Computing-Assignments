@@ -9,7 +9,7 @@ for type in core socket node
 		 	do 
 		 		filename="$type-$i-$j"
 		 		mkdir -p "csv/openmpi/$filename"
-				for iteration in {1..50}
+				for iteration in {1..5}
 				do
 					if [ "$filename" != "node-ob1-vader" ];
 					then

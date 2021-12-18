@@ -6,7 +6,7 @@ module load intel
 
 for j in tcp shm
 	do 
-		do for iteration in {1..50}
+		do for iteration in {1..5}
 		filename="core-$j"
 		mkdir -p "csv/intel/$filename"
 			do
@@ -20,7 +20,7 @@ for j in tcp shm
 
 for j in tcp shm
 	do 
-		do for iteration in {1..50}
+		do for iteration in {1..5}
 		filename="socket-$j"
 		mkdir -p "csv/intel/$filename"
 			do
@@ -34,7 +34,7 @@ for j in tcp shm
 
 for j in tcp shm
 	do 
-		do for iteration in {1..50}
+		do for iteration in {1..5}
 			filename="node-$j"
 			mkdir -p "csv/intel/$filename"
 			do
