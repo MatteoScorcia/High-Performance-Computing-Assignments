@@ -33,55 +33,59 @@ def insertHeadersToCSV(headers, result_full_path):
 
 if __name__ == '__main__':
 
-    directory = "csv/openmpi/mean"
-    for filename in os.listdir(directory):
-        full_path = os.path.join(directory, filename)
+    for module in ["openmpi", "intel"]:
+        directory = "csv/mean/" + module
 
-        headers, lines = removeHeadersFromCSV(
-            full_path)
+        for filename in os.listdir(directory):
+            full_path = os.path.join(directory, filename)
 
-        df = pd.read_csv(full_path)
+            headers, lines = removeHeadersFromCSV(
+                full_path)
 
-        insertHeadersToCSV(headers, full_path)
+            df = pd.read_csv(full_path)
 
-        x_data, y = df['#bytes'].values, df['t[usec]'].values
-        tick_list = list(range(len(x_data - 1)))
-        popt, _ = curve_fit(objective, x_data, y)
-        a, b = popt
-        plt.rcParams["figure.figsize"] = (12, 10)
+            insertHeadersToCSV(headers, full_path)
 
-        plt.scatter(x_data, y, label='measured data')
-        y_estimated = objective(x_data, a, b)
-        plt.plot(x_data, y_estimated, '--', color='red',
-                 label='least squares fitting')
+            x_data, y = df['#bytes'].values, df['t[usec]'].values
+            tick_list = list(range(len(x_data - 1)))
+            popt, _ = curve_fit(objective, x_data, y)
+            a, b = popt
+            plt.rcParams["figure.figsize"] = (12, 10)
 
-        c = y[0]
-        bandwidth = df['Mbytes/sec'][-1:]
+            plt.scatter(x_data, y, label='measured data')
+            y_estimated = objective(x_data, a, b)
+            plt.plot(x_data, y_estimated, '--', color='red',
+                     label='least squares fitting')
 
-        T_comm = [c + (element / bandwidth) for element in x_data]
-        plt.plot(x_data, T_comm, '--', color='blue',
-                 label='simple communication model')
-        plt.ylabel('t[usecon]')
-        plt.xlabel('#bytes')
-        plt.xscale('log', base=2)
-        plt.yscale('log', base=10)
-        plt.legend(loc="upper left")
+            c = y[0]
+            bandwidth = df['Mbytes/sec'][-1:]
 
-        plot_filename = os.path.splitext(filename)[0]+'.jpg'
-        plot_full_path = os.path.join("plots/openmpi", plot_filename)
-        plt.savefig(plot_full_path)
-        plt.clf()
+            T_comm = [c + (element / bandwidth) for element in x_data]
+            plt.plot(x_data, T_comm, '--', color='blue',
+                     label='simple communication model')
+            plt.ylabel('t[usecon]')
+            plt.xlabel('#bytes')
+            plt.xscale('log', base=2)
+            plt.yscale('log', base=10)
+            plt.legend(loc="upper left")
 
-        df['t[usec] (computed)'] = [round(number, 2) for number in y_estimated]
-        Mbytes_comp = [round(number, 2) for number in (x_data / y_estimated)]
-        df['Mbytes/sec (computed)'] = Mbytes_comp
+            plot_filename = os.path.splitext(filename)[0]+'.jpg'
+            plot_full_path = os.path.join("plots/" + module, plot_filename)
+            plt.savefig(plot_full_path)
+            plt.clf()
 
-        result_full_path = os.path.join("results/openmpi", filename)
-        df.to_csv(result_full_path, sep=",", index=False)
+            df['t[usec] (computed)'] = [round(number, 2)
+                                        for number in y_estimated]
+            Mbytes_comp = [round(number, 2)
+                           for number in (x_data / y_estimated)]
+            df['Mbytes/sec (computed)'] = Mbytes_comp
 
-        headers[2] = '#lambda[usec] (computed) -> ' + \
-            str(df['t[usec] (computed)'].iloc[0]) + \
-            ', bandwidth[Mbytes/sec] (computed) -> ' + \
-            str(df['Mbytes/sec (computed)'].iloc[-1]) + '\n'
+            result_full_path = os.path.join("results/" + module, filename)
+            df.to_csv(result_full_path, sep=",", index=False)
 
-        insertHeadersToCSV(headers, result_full_path)
+            headers[2] = '#lambda[usec] (computed) -> ' + \
+                str(df['t[usec] (computed)'].iloc[0]) + \
+                ', bandwidth[Mbytes/sec] (computed) -> ' + \
+                str(df['Mbytes/sec (computed)'].iloc[-1]) + '\n'
+
+            insertHeadersToCSV(headers, result_full_path)

@@ -25,26 +25,28 @@ def insertHeadersToCSV(headers, result_full_path):
 
 if __name__ == '__main__':
 
-    directory = "results/openmpi"
-    for filename in os.listdir(directory):
-        full_path = os.path.join(directory, filename)
+    for module in ["openmpi", "intel"]:
+        directory = "results/" + module
 
-        headers, lines = removeHeadersFromCSV(
-            full_path)
+        for filename in os.listdir(directory):
+            full_path = os.path.join(directory, filename)
 
-        rows = []
-        with open(full_path, "r") as file:
-            csvreader = csv.reader(file)
-            titles = next(csvreader)
-            for row in csvreader:
-                rows.append(row)
+            headers, lines = removeHeadersFromCSV(
+                full_path)
 
-        res = tabulate(rows, titles, numalign="right")
-        tabular_full_path = os.path.join(
-            "results/tabular/openmpi", filename[:-3]+"txt")
+            rows = []
+            with open(full_path, "r") as file:
+                csvreader = csv.reader(file)
+                titles = next(csvreader)
+                for row in csvreader:
+                    rows.append(row)
 
-        with open(tabular_full_path, "w+") as file:
-            file.writelines(headers)
-            file.writelines(res)
+                res = tabulate(rows, titles, numalign="right")
+                tabular_full_path = os.path.join(
+                    "results/tabular/" + module, filename[:-3]+"txt")
 
-        insertHeadersToCSV(headers, full_path)
+                with open(tabular_full_path, "w+") as file:
+                    file.writelines(headers)
+                    file.writelines(res)
+
+                insertHeadersToCSV(headers, full_path)
