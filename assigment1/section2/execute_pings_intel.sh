@@ -19,7 +19,6 @@ for j in tcp shm
 		done
 
 for j in tcp shm
-	do 
 		do for iteration in {1..5}
 			do 
 				filename="socket-$j"
@@ -34,7 +33,6 @@ for j in tcp shm
 		done
 
 for j in tcp shm
-	do 
 		do for iteration in {1..5}
 			do 
 				filename="node-$j"
