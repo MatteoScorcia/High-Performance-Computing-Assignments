@@ -76,8 +76,6 @@ if __name__ == '__main__':
         Mbytes_comp = [round(number, 2) for number in (x_data / y_estimated)]
         df['Mbytes/sec (computed)'] = Mbytes_comp
 
-        #print(tabulate(df, numalign="right"))
-
         result_full_path = os.path.join("results/openmpi", filename)
         df.to_csv(result_full_path, sep=",", index=False)
 
