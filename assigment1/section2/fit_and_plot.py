@@ -33,7 +33,7 @@ def insertHeadersToCSV(headers, result_full_path):
 
 if __name__ == '__main__':
 
-    directory = "csv/openmpi"
+    directory = "csv/openmpi/mean"
     for filename in os.listdir(directory):
         full_path = os.path.join(directory, filename)
 
