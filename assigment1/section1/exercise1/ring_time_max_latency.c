@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
 		execute_mpi_ring(numprocs, fptr);
 		elapsed_time = MPI_Wtime() - start_time;
 
-		MPI_Reduce(&elapsed_time, &time_per_iteration[i], 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce(&elapsed_time, &time_per_iteration[i], 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
 		if (my_rank == 0)
 		{
@@ -33,16 +33,19 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	//compute standard deviation of the results and print to file
 	if (my_rank == 0)
 	{
 		double mean = total_time / iterations;
-		double stddev = 0.0;
+		double dev = 0.0;
 		for (int i = 0; i < iterations; i++)
 		{
-			stddev += pow(time_per_iteration[i] - mean, 2);
+			dev += pow(time_per_iteration[i] - mean, 2);
 		}
 
-		fprintf(fptr, "%10.8f,%10.8f,%d,%d\n", mean, stddev, iterations, numprocs);
+		double std_dev = sqrt((dev / (iterations - 1)));
+
+		fprintf(fptr, "%10.8f,%10.8f,%d,%d\n", mean, std_dev, iterations, numprocs);
 	}
 
 	fclose(fptr);

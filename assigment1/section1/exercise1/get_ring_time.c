@@ -102,11 +102,11 @@ void execute_mpi_ring(int numprocs, FILE *fptr)
 		}
 		else
 		{
-			//send message to left neighbour with right tag
+			//send message to left neighbour with proper tag
 			send_left_buf = msg_right_buf - my_rank;
 			MPI_Isend(&send_left_buf, 1, MPI_INT, left_neighbour, msg_right_status.MPI_TAG, ring_communicator, &req_left[0]);
 
-			//send message to right neighbour with right tag
+			//send message to right neighbour with proper tag
 			send_right_buf = msg_left_buf + my_rank;
 			MPI_Isend(&send_right_buf, 1, MPI_INT, right_neighbour, msg_left_status.MPI_TAG, ring_communicator, &req_right[0]);
 		}
