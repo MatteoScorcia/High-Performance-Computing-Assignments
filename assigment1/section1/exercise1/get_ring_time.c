@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-	int iterations = 100;
+	int iterations = 1000;
 	double time_per_iteration[iterations];
 	double total_time = 0;
 	double start_time, elapsed_time;

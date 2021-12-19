@@ -1,6 +1,6 @@
 #! /bin/sh
-module load openmpi-4.1.1+gnu-9.3.0
 mpicc get_ring_time.c -o ./build/get_ring_time -lm
+module load openmpi-4.1.1+gnu-9.3.0
 
 END=48
 
