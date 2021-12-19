@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-	int iterations = 1000;
+	int iterations = 1;
 	double time_per_iteration[iterations];
 	double total_time = 0;
 	double start_time, elapsed_time;
@@ -43,7 +43,15 @@ int main(int argc, char *argv[])
 			dev += pow(time_per_iteration[i] - mean, 2);
 		}
 
-		double std_dev = sqrt((dev / (iterations - 1)));
+		double std_dev;		
+
+		if(iterations > 1)
+		{
+			std_dev = sqrt((dev / (iterations - 1)));
+		}
+		else {
+			std_dev = 0;
+		}
 
 		fprintf(fptr, "%10.8f,%10.8f,%d,%d\n", mean, std_dev, iterations, numprocs);
 	}
