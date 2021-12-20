@@ -2,7 +2,7 @@
 #include <mpi.h>
 #include <stdlib.h>
 
-void execute_mpi_ring(int numprocs, FILE *fptr);
+void execute_mpi_ring(int numprocs);
 
 int main(int argc, char *argv[])
 {
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 	double start_time, elapsed_time;
 
 	start_time = MPI_Wtime();
-	execute_mpi_ring(numprocs, fptr);
+	execute_mpi_ring(numprocs);
 	elapsed_time = MPI_Wtime() - start_time;
 
 	MPI_Reduce(&elapsed_time, &slowest_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-void execute_mpi_ring(int numprocs, FILE *fptr)
+void execute_mpi_ring(int numprocs)
 {
 	//1D ring array (periodic boundary)
 	int ndims = 1;
