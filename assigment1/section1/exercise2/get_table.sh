@@ -1,6 +1,9 @@
 #! /bin/sh
 module load openmpi-4.1.1+gnu-9.3.0
-mpicc get_matrix_time.c -o ./build/get_matrix_time
+
+CWD=/u/dssc/matteo/High-Performance-Computing-Assignments/assigment1/section1/exercise2
+
+mpicc $CWD/get_matrix_time.c -o $CWD/build/get_matrix_time
 
 topology=("topo1" "topo2" "topo3") 
 topo1=24
@@ -18,35 +21,35 @@ for distribution in "${distribution[@]}"
 do
 	if [ "$distribution" == "dist1" ];
 	then
-		mpirun -np 24 ./build/get_matrix_time ${dist1[@]} $topo1
+		mpirun -np 24 $CWD/build/get_matrix_time ${dist1[@]} $topo1
 		for((start=0;start<"${#topo2[@]};start+=2"));
 		do
-			mpirun -np 24 ./build/get_matrix_time ${dist1[@]} ${topo2[@]:$start:2}
+			mpirun -np 24 $CWD/build/get_matrix_time ${dist1[@]} ${topo2[@]:$start:2}
 		done
 		for((start=0;start<"${#topo3[@]};start+=3"));
 		do
-			mpirun -np 24 ./build/get_matrix_time ${dist1[@]} ${topo3[@]:$start:3}
+			mpirun -np 24 $CWD/build/get_matrix_time ${dist1[@]} ${topo3[@]:$start:3}
 		done
 	elif [ "$distribution" == "dist2" ];
 	then
-		mpirun -np 24 ./build/get_matrix_time ${dist2[@]} $topo1
+		mpirun -np 24 $CWD/build/get_matrix_time ${dist2[@]} $topo1
 		for((start=0;start<"${#topo2[@]};start+=2"));
 		do
-			mpirun -np 24 ./build/get_matrix_time ${dist2[@]} ${topo2[@]:$start:2}
+			mpirun -np 24 $CWD/build/get_matrix_time ${dist2[@]} ${topo2[@]:$start:2}
 		done
 		for((start=0;start<"${#topo3[@]};start+=3"));
 		do
-			mpirun -np 24 ./build/get_matrix_time ${dist2[@]} ${topo3[@]:$start:3}
+			mpirun -np 24 $CWD/build/get_matrix_time ${dist2[@]} ${topo3[@]:$start:3}
 		done	
 	else
-		mpirun -np 24 ./build/get_matrix_time ${dist3[@]} $topo1
+		mpirun -np 24 $CWD/build/get_matrix_time ${dist3[@]} $topo1
 		for((start=0;start<"${#topo2[@]};start+=2"));
 		do
-			mpirun -np 24 ./build/get_matrix_time ${dist3[@]} ${topo2[@]:$start:2}
+			mpirun -np 24 $CWD/build/get_matrix_time ${dist3[@]} ${topo2[@]:$start:2}
 		done
 		for((start=0;start<"${#topo3[@]};start+=3"));
 		do
-			mpirun -np 24 ./build/get_matrix_time ${dist3[@]} ${topo3[@]:$start:3}
+			mpirun -np 24 $CWD/build/get_matrix_time ${dist3[@]} ${topo3[@]:$start:3}
 		done
 	fi
 done
