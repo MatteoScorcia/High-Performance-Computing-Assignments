@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <mpi.h>
-#include <math.h>
 #include <stdlib.h>
 
 void execute_mpi_ring(int numprocs, FILE *fptr);
@@ -16,48 +15,19 @@ int main(int argc, char *argv[])
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-	int iterations = 1000;
-	double *time_per_iteration = malloc(sizeof(double) * iterations);
-	double total_time = 0;
+	double slowest_time;
 	double start_time, elapsed_time;
-	for (int i = 0; i < iterations; i++)
-	{
-		start_time = MPI_Wtime();
-		execute_mpi_ring(numprocs, fptr);
-		elapsed_time = MPI_Wtime() - start_time;
 
-		MPI_Reduce(&elapsed_time, &time_per_iteration[i], 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	start_time = MPI_Wtime();
+	execute_mpi_ring(numprocs, fptr);
+	elapsed_time = MPI_Wtime() - start_time;
 
-		if (my_rank == 0)
-		{
-			//printf("time per iteration %d: %f\n", i, time_per_iteration[i]);
-			total_time += time_per_iteration[i];
-		}
-	}
+	MPI_Reduce(&elapsed_time, &slowest_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-	//compute standard deviation of the results and print to file
 	if (my_rank == 0)
 	{
-		printf("total time: %f\n", total_time);
-		double mean = total_time / iterations;
-		double dev = 0.0;
-		for (int i = 0; i < iterations; i++)
-		{
-			dev += pow(time_per_iteration[i] - mean, 2);
-		}
-
-		double std_dev;
-
-		if (iterations > 1)
-		{
-			std_dev = sqrt((dev / (iterations - 1)));
-		}
-		else
-		{
-			std_dev = 0;
-		}
-
-		fprintf(fptr, "%10.8f,%10.8f,%d,%d\n", mean, std_dev, iterations, numprocs);
+		printf("slowest time: %f - iteration: %s - #processors: %d\n", slowest_time, argv[1], numprocs);
+		fprintf(fptr, "%10.8f,%s,%d\n", slowest_time, argv[1], numprocs);
 	}
 
 	fclose(fptr);
