@@ -9,5 +9,5 @@ PROCESSES=(12 24 48)
 
 for process in "${PROCESSES[@]}"
 do
-	mpirun --mca btl ^openib -np $process --map-by node $CWD/jacoby3D.x <$CWD/input.1200 2>/dev/null
+	mpirun --mca btl ^openib -np $process --map-by node $CWD/jacoby3D.x <$CWD/input.1200 >$CWD/$process-map-node.txt
 done
