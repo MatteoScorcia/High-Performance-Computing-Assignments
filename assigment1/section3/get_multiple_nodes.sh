@@ -1,5 +1,5 @@
 #! /bin/sh
-module load openmpi
+module load openmpi-4.1.1+gnu-9.3.0
 
 CWD=/u/dssc/matteo/High-Performance-Computing-Assignments/assigment1/section3/
 
@@ -9,5 +9,5 @@ PROCESSES=(12 24 48)
 
 for process in "${PROCESSES[@]}"
 do
-	mpirun -np $process --map-by node $CWD/jacoby3D.x 2>/dev/null
+	mpirun -np $process --map-by node $CWD/jacoby3D.x $CWD/input.1200 2>/dev/null
 done
