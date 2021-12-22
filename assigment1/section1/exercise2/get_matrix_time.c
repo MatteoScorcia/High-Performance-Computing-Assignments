@@ -10,7 +10,8 @@ void executeMatrixAddition(int argc, char *argv[], int numprocs);
 int main(int argc, char *argv[])
 {
 	FILE *fptr;
-	fptr = fopen("./table.csv", "a");
+	//fptr = fopen("./table.csv", "a");
+	fptr = fopen("./matrix_times.csv", "a");
 
 	int numprocs;
 	MPI_Init(&argc, &argv);
