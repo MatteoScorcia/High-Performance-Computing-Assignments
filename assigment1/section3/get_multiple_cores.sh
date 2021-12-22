@@ -10,5 +10,5 @@ PROCESSES=(4 8 12)
 for process in "${PROCESSES[@]}"
 do
 	mpirun --mca btl ^openib -np $process --map-by core $CWD/jacoby3D.x <$CWD/input.1200 >$CWD/$process-map-core.txt
-	mpirun --mca btl ^openib -np $process --map-by socket $CWD/jacoby3D.x <$CWD/input.1200 >$CWD/process-map-socket.txt
+	mpirun --mca btl ^openib -np $process --map-by socket $CWD/jacoby3D.x <$CWD/input.1200 >$CWD/$process-map-socket.txt
 done
