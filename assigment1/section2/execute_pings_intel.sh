@@ -4,7 +4,7 @@
 module load openmpi-4.1.1+gnu-9.3.0
 module load intel
 
-for j in tcp shm 
+for j in tcp mlx 
 		do for iteration in {1..5}
 			do 
 				filename="core-$j"
@@ -18,7 +18,7 @@ for j in tcp shm
 			done
 		done
 
-for j in tcp shm
+for j in tcp mlx
 		do for iteration in {1..5}
 			do 
 				filename="socket-$j"
@@ -32,7 +32,7 @@ for j in tcp shm
 			done
 		done
 
-for j in tcp shm
+for j in tcp mlx
 		do for iteration in {1..5}
 			do 
 				filename="node-$j"
