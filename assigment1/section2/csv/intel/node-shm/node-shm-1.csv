@@ -1,3 +1,0 @@
-mpiexec -n 2 -ppn 1 -genv I_MPI_FABRICS ofi -genv I_MPI_OFI_PROVIDER shm ./IMB-MPI1 PingPong -msglog 29
-tnode009, tnode010
-lamba, bandwith computed by fitting data

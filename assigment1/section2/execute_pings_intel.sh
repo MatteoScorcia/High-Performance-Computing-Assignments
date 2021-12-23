@@ -33,7 +33,7 @@ for j in tcp mlx shm
 			done
 		done
 
-for j in tcp mlx shm
+for j in tcp mlx
 		do for iteration in {1..5}
 			do 
 				filename="node-$j"
