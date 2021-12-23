@@ -1,5 +1,6 @@
 #! /bin/sh
 #just call di script with the first 2 arguments ($1, $2) as name of nodes involved
+#remember to do a make before the run!
 
 module load openmpi-4.1.1+gnu-9.3.0
 module load intel
