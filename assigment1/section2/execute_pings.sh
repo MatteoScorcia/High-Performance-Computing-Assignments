@@ -30,7 +30,7 @@ do
 		filename=$type-ucx
 		mkdir -p "csv/openmpi/$filename"
 
-		echo "mpirun  --map-by $type --mca pml ucx -np 2 ./IMB-MPI1 PingPong -msglog 29 "> "csv/openmpi/$filename/$filename-$iteration".csv
+		echo "mpirun  --map-by $type --mca pml ucx -np 2 ./IMB-MPI1 PingPong -msglog 29 " > "csv/openmpi/$filename/$filename-$iteration".csv
 
 		if [ "$type" == "node" ];
 		then
