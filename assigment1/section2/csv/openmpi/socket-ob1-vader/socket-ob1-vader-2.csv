@@ -1,0 +1,3 @@
+mpirun  --map-by socket --mca pml ob1 --mca btl self,vader -np 2 ./IMB-MPI1 PingPong -msglog 29
+tnode009
+lamba, bandwith computed by fitting data
