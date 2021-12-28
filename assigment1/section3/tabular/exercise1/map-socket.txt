@@ -1,0 +1,5 @@
+  #Processors    expected performance [MLUPs/sec]    measured performance [MLUPs/sec]    difference in performance [MLUPs/sec]
+-------------  ----------------------------------  ----------------------------------  ---------------------------------------
+            4                             355.194                             450.741                                  95.5467
+            8                               640.9                             891.285                                  250.385
+           12                              961.35                             1336.25                                  374.903

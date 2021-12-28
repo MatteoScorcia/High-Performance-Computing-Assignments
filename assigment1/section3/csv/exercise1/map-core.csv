@@ -1,4 +1,4 @@
-#Processors,expected performance,measured performance,difference in performance
+#Processors,expected performance [MLUPs/sec],measured performance [MLUPs/sec],difference in performance [MLUPs/sec]
 4,364.86138912276436,451.812471379,86.95108225623562
 8,664.734567162138,890.246539591,225.511972428862
 12,997.1018507432069,1326.29329586,329.19144511679303

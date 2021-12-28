@@ -64,9 +64,9 @@ if __name__ == '__main__':
 
     df = pd.DataFrame()
     df['#Processors'] = [4, 8, 12]
-    df['expected performance'] = y
-    df['measured performance'] = y_measured
-    df['difference in performance'] = diff
+    df['expected performance [MLUPs/sec]'] = y
+    df['measured performance [MLUPs/sec]'] = y_measured
+    df['difference in performance [MLUPs/sec]'] = diff
     df.to_csv("csv/exercise1/map-core.csv", sep=",", index=False)
 
     print("exercise 1 - map by core:")
@@ -92,9 +92,9 @@ if __name__ == '__main__':
 
     df = pd.DataFrame()
     df['#Processors'] = [4, 8, 12]
-    df['expected performance'] = y
-    df['measured performance'] = y_measured
-    df['difference in performance'] = diff
+    df['expected performance [MLUPs/sec]'] = y
+    df['measured performance [MLUPs/sec]'] = y_measured
+    df['difference in performance [MLUPs/sec]'] = diff
     df.to_csv("csv/exercise1/map-socket.csv", sep=",", index=False)
 
     print("exercise 1 - map by socket")
@@ -137,9 +137,9 @@ if __name__ == '__main__':
 
     df = pd.DataFrame()
     df['#Processors'] = [12, 24, 48]
-    df['expected performance'] = y
-    df['measured performance'] = y_measured
-    df['difference in performance'] = diff
+    df['expected performance [MLUPs/sec]'] = y
+    df['measured performance [MLUPs/sec]'] = y_measured
+    df['difference in performance [MLUPs/sec]'] = diff
     df.to_csv("csv/exercise2.csv", sep=",", index=False)
 
     print("exercise 2:")
@@ -182,9 +182,9 @@ if __name__ == '__main__':
 
     df = pd.DataFrame()
     df['#Processors'] = [12, 24, 48]
-    df['expected performance'] = y
-    df['measured performance'] = y_measured
-    df['difference in performance'] = diff
+    df['expected performance [MLUPs/sec]'] = y
+    df['measured performance [MLUPs/sec]'] = y_measured
+    df['difference in performance [MLUPs/sec]'] = diff
     df.to_csv("csv/exercise3.csv", sep=",", index=False)
 
     print("exercise 3:")
