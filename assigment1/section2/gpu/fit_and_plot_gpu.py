@@ -1,10 +1,7 @@
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
-from numpy import arange
 from scipy.optimize import curve_fit
-import re
-from tabulate import tabulate
 
 
 def objective(x_data, c, bandwidth):
