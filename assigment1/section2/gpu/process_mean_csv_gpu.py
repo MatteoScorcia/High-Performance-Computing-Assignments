@@ -28,7 +28,7 @@ def insertHeadersToCSV(headers, result_full_path):
 if __name__ == '__main__':
 
     for module in ["openmpi", "intel"]:
-        top_directory = "gpu/csv/" + module
+        top_directory = "csv/" + module
 
         for current_directory in os.listdir(top_directory):
 
@@ -69,7 +69,7 @@ if __name__ == '__main__':
                                   - mean_dataFrame['t[usec]'][0])**2)
             std_dev = round(math.sqrt(dev / (counter - 1)), 2)
 
-            mean_result_path = os.path.join("gpu/csv/mean/" + module, filename)
+            mean_result_path = os.path.join("csv/mean/" + module, filename)
             mean_result_path = mean_result_path[:-6] + mean_result_path[-4:]
 
             mean_dataFrame.to_csv(mean_result_path, sep=",", index=False)
