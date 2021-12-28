@@ -63,7 +63,7 @@ if __name__ == '__main__':
             T_comm = [c + (element / bandwidth) for element in x_data]
             plt.plot(x_data, T_comm, '--', color='blue',
                      label='simple communication model')
-            plt.ylabel('t[usecon]')
+            plt.ylabel('t[usec]')
             plt.xlabel('#bytes')
             plt.xscale('log', base=2)
             plt.yscale('log', base=10)
