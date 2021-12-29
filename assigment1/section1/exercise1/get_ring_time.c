@@ -2,7 +2,7 @@
 #include <mpi.h>
 #include <stdlib.h>
 
-#define ITERATIONS 100000
+#define ITERATIONS 1000000
 
 void execute_mpi_ring(int numprocs, double *start_ring_time, double *elapsed_ring_time);
 

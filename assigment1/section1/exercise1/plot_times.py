@@ -22,7 +22,7 @@ if __name__ == '__main__':
     plt.ylabel("t[sec]")
     plt.legend(loc="upper left")
     plt.savefig("plot_ring_times.jpg")
-    plt.clf()
+    # plt.clf()
 
     df = pd.read_csv("runtimes.csv")
 
@@ -41,7 +41,6 @@ if __name__ == '__main__':
     bandwidth = 5460
     message_size = 4
     y = [T_comm(message_size, c, bandwidth, num_proc) for num_proc in x]
-    print(x, y)
     plt.plot(x, y, 'k-', label="network model (#Processors <= 24)")
 
     x = np.arange(25, 49)
@@ -49,7 +48,6 @@ if __name__ == '__main__':
     bandwidth = 12060
     message_size = 4
     y = [T_comm(message_size, c, bandwidth, num_proc) for num_proc in x]
-    print(x, y)
     plt.plot(x, y, 'k-.', label="network model (#Processors > 24)")
 
     plt.legend(loc="upper left")
