@@ -5,7 +5,7 @@ CWD=/u/dssc/matteo/High-Performance-Computing-Assignments/assigment1/section1/ex
 
 mpicc $CWD/get_ring_time.c -o $CWD/build/get_ring_time
 
-PROCESSORS=4
+PROCESSORS=48
 ITERATIONS=1
 
 for ((i=1;i<=PROCESSORS;i++));
