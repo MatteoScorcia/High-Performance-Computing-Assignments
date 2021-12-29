@@ -2,49 +2,40 @@
 #include <mpi.h>
 #include <stdlib.h>
 
-void execute_mpi_ring(int numprocs, double *start_ring_time);
+void execute_mpi_ring(int numprocs);
 
 int main(int argc, char *argv[])
 {
-    FILE *fptr, *fptr2;
+    FILE *fptr;
     int numprocs;
-    fptr = fopen("./ring_times.csv", "a");
-    fptr2 = fopen("./runtimes.csv", "a");
+    fptr = fopen("./runtimes.csv", "a");
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 
     int my_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-    double final_time, slowest_runtime, slowest_ring_time;
-    double start_runtime, start_ring_time, elapsed_runtime, elapsed_ring_time;
+    double slowest_time;
+    double start_time, elapsed_time;
 
-    start_runtime = MPI_Wtime();
-    execute_mpi_ring(numprocs, &start_ring_time);
-    final_time = MPI_Wtime();
+    start_time = MPI_Wtime();
+    execute_mpi_ring(numprocs);
+    elapsed_time = MPI_Wtime() - start_time;
 
-    elapsed_runtime = final_time - start_runtime;
-    elapsed_ring_time = final_time - start_ring_time;
-
-    MPI_Reduce(&elapsed_runtime, &slowest_runtime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-    MPI_Reduce(&elapsed_ring_time, &slowest_ring_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&elapsed_time, &slowest_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
     if (my_rank == 0)
     {
-        printf("slowest ring time: %f - iteration: %s - #processors: %d\n", slowest_ring_time, argv[1], numprocs);
-        fprintf(fptr, "%10.8f,%s,%d\n", slowest_ring_time, argv[1], numprocs);
-
-        printf("slowest runtime: %f - iteration: %s - #processors: %d\n", slowest_runtime, argv[1], numprocs);
-        fprintf(fptr2, "%10.8f,%s,%d\n", slowest_runtime, argv[1], numprocs);
+        printf("slowest time: %f - iteration: %s - #processors: %d\n", slowest_time, argv[1], numprocs);
+        fprintf(fptr, "%10.8f,%s,%d\n", slowest_time, argv[1], numprocs);
     }
 
     fclose(fptr);
-    fclose(fptr2);
     MPI_Finalize();
     return 0;
 }
 
-void execute_mpi_ring(int numprocs, double *start_ring_time)
+void execute_mpi_ring(int numprocs)
 {
     //1D ring array (periodic boundary)
     int ndims = 1;
@@ -75,8 +66,6 @@ void execute_mpi_ring(int numprocs, double *start_ring_time)
     int send_left_buf, send_right_buf;
 
     int counter_msg = 0;
-
-    *start_ring_time = MPI_Wtime();
 
     for (int iteration = 1; iteration <= numprocs; iteration++)
     {
