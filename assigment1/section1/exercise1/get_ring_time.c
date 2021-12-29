@@ -31,8 +31,11 @@ int main(int argc, char *argv[])
         MPI_Reduce(&elapsed_runtime, &slowest_runtime, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
         MPI_Reduce(&elapsed_ring_time, &slowest_ring_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-        tot_runtime += elapsed_runtime;
-        tot_ring_time += elapsed_ring_time;
+        if (my_rank == 0)
+        {
+            tot_runtime += slowest_runtime;
+            tot_ring_time += slowest_ring_time;
+        }
     }
 
     if (my_rank == 0)
