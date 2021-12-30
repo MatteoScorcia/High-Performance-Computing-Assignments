@@ -2,7 +2,7 @@
 #include <mpi.h>
 #include <stdlib.h>
 
-#define ITERATIONS 1000000
+#define ITERATIONS 100000
 
 void execute_mpi_ring(int numprocs, double *start_ring_time, double *elapsed_ring_time);
 
@@ -85,7 +85,9 @@ void execute_mpi_ring(int numprocs, double *start_ring_time, double *elapsed_rin
 
     int counter_msg = 0;
 
-    *start_ring_time = MPI_Wtime();
+    // *start_ring_time = MPI_Wtime();
+    *start_ring_time = 0;
+    double start_iteration_time, elapsed_iteration_time;
 
     for (int iteration = 1; iteration <= numprocs; iteration++)
     {
@@ -96,6 +98,7 @@ void execute_mpi_ring(int numprocs, double *start_ring_time, double *elapsed_rin
 
         if (iteration == 1)
         {
+            start_iteration_time = MPI_Wtime();
             //send message to left neighbour
             send_left_buf = my_rank;
             MPI_Isend(&send_left_buf, 1, MPI_INT, left_neighbour, my_rank * 10, ring_communicator, &req_left[0]);
@@ -106,6 +109,7 @@ void execute_mpi_ring(int numprocs, double *start_ring_time, double *elapsed_rin
         }
         else
         {
+            start_iteration_time = MPI_Wtime();
             //send message to left neighbour with right tag
             send_left_buf = msg_right_buf - my_rank;
             MPI_Isend(&send_left_buf, 1, MPI_INT, left_neighbour, msg_right_status.MPI_TAG, ring_communicator, &req_left[0]);
@@ -128,6 +132,9 @@ void execute_mpi_ring(int numprocs, double *start_ring_time, double *elapsed_rin
         //wait for Irecv to finish receiving before starting a new iteration
         MPI_Wait(&req_right[1], &msg_right_status);
         MPI_Wait(&req_left[1], &msg_left_status);
+
+        *start_ring_time += MPI_Wtime() - start_iteration_time;
+
         counter_msg += 2;
     }
 
