@@ -34,14 +34,14 @@ if __name__ == '__main__':
     plt.ylabel("t[sec]")
 
     x = np.arange(1, 25)
-    c = 0.41 / 1000000
-    bandwidth = 5460
+    c = 0.55 / 1000000
+    bandwidth = 3520
     message_size = 4
     y = [T_comm(message_size, c, bandwidth, num_proc) for num_proc in x]
     plt.plot(x, y, 'k-', label="network model (#Processors <= 24)")
 
     x = np.arange(25, 49)
-    c = 0.99 / 1000000
+    c = 0.97 / 1000000
     bandwidth = 12060
     message_size = 4
     y = [T_comm(message_size, c, bandwidth, num_proc) for num_proc in x]
