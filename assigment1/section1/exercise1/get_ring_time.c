@@ -72,10 +72,10 @@ void execute_mpi_ring(int numprocs, double *start_ring_time, double *elapsed_rin
     MPI_Request req_right[2];
 
     int direction = 0, disposition = 1;
-    int left_neighbour, right_neighbour;
+    int left_neighbor, right_neighbor;
 
     //find left and right neighbours of the mpi process
-    MPI_Cart_shift(ring_communicator, direction, disposition, &left_neighbour, &right_neighbour);
+    MPI_Cart_shift(ring_communicator, direction, disposition, &left_neighbor, &right_neighbor);
 
     MPI_Status msg_left_status;
     MPI_Status msg_right_status;
@@ -101,29 +101,29 @@ void execute_mpi_ring(int numprocs, double *start_ring_time, double *elapsed_rin
             start_iteration_time = MPI_Wtime();
             //send message to left neighbour
             send_left_buf = my_rank;
-            MPI_Isend(&send_left_buf, 1, MPI_INT, left_neighbour, my_rank * 10, ring_communicator, &req_left[0]);
+            MPI_Isend(&send_left_buf, 1, MPI_INT, left_neighbor, my_rank * 10, ring_communicator, &req_left[0]);
 
             //send message to right neighbour
             send_right_buf = -1 * my_rank;
-            MPI_Isend(&send_right_buf, 1, MPI_INT, right_neighbour, my_rank * 10, ring_communicator, &req_right[0]);
+            MPI_Isend(&send_right_buf, 1, MPI_INT, right_neighbor, my_rank * 10, ring_communicator, &req_right[0]);
         }
         else
         {
             start_iteration_time = MPI_Wtime();
             //send message to left neighbour with right tag
             send_left_buf = msg_right_buf - my_rank;
-            MPI_Isend(&send_left_buf, 1, MPI_INT, left_neighbour, msg_right_status.MPI_TAG, ring_communicator, &req_left[0]);
+            MPI_Isend(&send_left_buf, 1, MPI_INT, left_neighbor, msg_right_status.MPI_TAG, ring_communicator, &req_left[0]);
 
             //send message to right neighbour with right tag
             send_right_buf = msg_left_buf + my_rank;
-            MPI_Isend(&send_right_buf, 1, MPI_INT, right_neighbour, msg_left_status.MPI_TAG, ring_communicator, &req_right[0]);
+            MPI_Isend(&send_right_buf, 1, MPI_INT, right_neighbor, msg_left_status.MPI_TAG, ring_communicator, &req_right[0]);
         }
 
         //receive message from right neighbour
-        MPI_Irecv(&msg_right_buf, 1, MPI_INT, right_neighbour, msg_right_tag, ring_communicator, &req_right[1]);
+        MPI_Irecv(&msg_right_buf, 1, MPI_INT, right_neighbor, msg_right_tag, ring_communicator, &req_right[1]);
 
         //receive message from left neighbour
-        MPI_Irecv(&msg_left_buf, 1, MPI_INT, left_neighbour, msg_left_tag, ring_communicator, &req_left[1]);
+        MPI_Irecv(&msg_left_buf, 1, MPI_INT, left_neighbor, msg_left_tag, ring_communicator, &req_left[1]);
 
         //wait for Isend to finish sending before starting a new iteration
         MPI_Wait(&req_left[0], MPI_STATUS_IGNORE);
