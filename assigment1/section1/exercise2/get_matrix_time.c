@@ -138,14 +138,15 @@ void executeMatrixAddition(int argc, char *argv[], int numprocs, double *start_m
     int my_rank;
     MPI_Comm_rank(matrix_communicator, &my_rank);
 
-    *start_matrix_time = MPI_Wtime();
-
     if (my_rank == 0)
     {
         srand48(SEED);
         fillRandomToMatrix(x_size, y_size, z_size, matrixA);
         fillRandomToMatrix(x_size, y_size, z_size, matrixB);
     }
+
+    *start_matrix_time = MPI_Wtime();
+
     MPI_Scatter(matrixA, matrix_chunk_size, MPI_DOUBLE, chunk_matrixA, matrix_chunk_size, MPI_DOUBLE, 0, matrix_communicator);
     MPI_Scatter(matrixB, matrix_chunk_size, MPI_DOUBLE, chunk_matrixB, matrix_chunk_size, MPI_DOUBLE, 0, matrix_communicator);
 
