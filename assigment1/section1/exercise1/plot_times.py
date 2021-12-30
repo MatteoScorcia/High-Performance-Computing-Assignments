@@ -36,18 +36,25 @@ if __name__ == '__main__':
     plt.xlabel("#Processors")
     plt.ylabel("t[sec]")
 
-    x = np.arange(1, 25)
+    x = np.arange(1, 13)
+    c = 0.2 / 1000000
+    bandwidth = 6220
+    message_size = 4
+    y = [T_comm(message_size, c, bandwidth, num_proc) * 2 for num_proc in x]
+    plt.plot(x, y, 'k-', label="network model (#Processors <= 12)")
+
+    x = np.arange(13, 25)
     c = 0.41 / 1000000
     bandwidth = 5460
     message_size = 4
-    y = [T_comm(message_size, c, bandwidth, num_proc) for num_proc in x]
-    plt.plot(x, y, 'k-', label="network model (#Processors <= 24)")
+    y = [T_comm(message_size, c, bandwidth, num_proc) * 2 for num_proc in x]
+    plt.plot(x, y, 'k--', label="network model (12 < #Processors <= 24)")
 
     x = np.arange(25, 49)
     c = 0.99 / 1000000
     bandwidth = 12060
     message_size = 4
-    y = [T_comm(message_size, c, bandwidth, num_proc) for num_proc in x]
+    y = [T_comm(message_size, c, bandwidth, num_proc) * 2 for num_proc in x]
     plt.plot(x, y, 'k-.', label="network model (#Processors > 24)")
 
     plt.legend(loc="upper left")
