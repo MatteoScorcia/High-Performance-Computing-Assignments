@@ -86,8 +86,8 @@ void execute_mpi_ring(int numprocs, double *start_ring_time, double *elapsed_rin
     int counter_msg = 0;
 
     // *start_ring_time = MPI_Wtime();
-    *start_ring_time = 0;
-    double start_iteration_time, elapsed_iteration_time;
+    //*start_ring_time = 0;
+    double start_iteration_time, elapsed_iteration_time = 0;
 
     for (int iteration = 1; iteration <= numprocs; iteration++)
     {
@@ -133,10 +133,10 @@ void execute_mpi_ring(int numprocs, double *start_ring_time, double *elapsed_rin
         MPI_Wait(&req_right[1], &msg_right_status);
         MPI_Wait(&req_left[1], &msg_left_status);
 
-        *start_ring_time += MPI_Wtime() - start_iteration_time;
+        elapsed_iteration_time += MPI_Wtime() - start_iteration_time;
 
         counter_msg += 2;
     }
 
-    *elapsed_ring_time = MPI_Wtime() - *start_ring_time;
+    *elapsed_ring_time = elapsed_iteration_time;
 }
