@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     int my_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-    double final_time, slowest_runtime, slowest_ring_time;
+    double slowest_runtime, slowest_ring_time;
     double start_runtime, start_ring_time, elapsed_runtime, elapsed_ring_time;
     double tot_runtime = 0, tot_ring_time = 0;
 
@@ -85,8 +85,6 @@ void execute_mpi_ring(int numprocs, double *start_ring_time, double *elapsed_rin
 
     int counter_msg = 0;
 
-    // *start_ring_time = MPI_Wtime();
-    //*start_ring_time = 0;
     double start_iteration_time, elapsed_iteration_time = 0;
 
     for (int iteration = 1; iteration <= numprocs; iteration++)
