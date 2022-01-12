@@ -28,10 +28,11 @@ void get_axis_coord(kpoint *dataset, float_t *arr, int len, int axis);
 void get_axis_coord_ptr(kpoint *dataset, float_t **arr, int len, int axis);
 void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len);
 int cmpfunc_x_axis(const void *a, const void *b);
+int cmpfunc_y_axis(const void *a, const void *b);
 int cmpfunc(const void *a, const void *b);
 int cmpfunc_ptr(const void *a, const void *b);
 float_t get_array_variance(float_t **arr, int len);
-float_t get_dataset_variance(kpoint **arr, int len, int axis);
+float_t get_dataset_extent(kpoint **arr, int len, int axis);
 
 int choose_splitting_dimension(float_t **x_dataset_ptr, float_t **y_dataset_ptr,
                                int len);
@@ -49,19 +50,30 @@ int main(int argc, char *argv[]) {
   // printf("median x_axis: %f\n", nlogn_median(x_axis_dataset, len));
   // printf("median y_axis: %f\n", nlogn_median(y_axis_dataset, len));
 
-  // try sorting only pointers 
+  // try sorting only pointers
   kpoint *x_ordered_dataset[len];
+  kpoint *y_ordered_dataset[len];
 
   get_dataset_ptrs(dataset, x_ordered_dataset, len);
+  get_dataset_ptrs(dataset, y_ordered_dataset, len);
+
   qsort(x_ordered_dataset, len, sizeof(kpoint *), cmpfunc_x_axis);
+  qsort(y_ordered_dataset, len, sizeof(kpoint *), cmpfunc_y_axis);
+
   printf("last x of the ordered dataset by x: %f\n",
          (*x_ordered_dataset[len - 1]).coords[x_axis]);
-  
-  printf("variance of x components of dataset: %f\n",
-         get_dataset_variance(x_ordered_dataset, len, x_axis));
 
+  printf("last y of the ordered dataset by x: %f\n",
+         (*y_ordered_dataset[len - 1]).coords[y_axis]);
+
+  printf("variance of x components of dataset: %f\n",
+         get_dataset_extent(x_ordered_dataset, len, x_axis));
+
+  printf("variance of y components of dataset: %f\n",
+         get_dataset_extent(y_ordered_dataset, len, y_axis));
 
   // working separately on the 2 dimensions
+  printf("\nworking separately on the 2 dimensions ----- \n");
   float_t *x_coords_dataset[len];
   float_t *y_coords_dataset[len];
 
@@ -81,8 +93,7 @@ int main(int argc, char *argv[]) {
          get_array_variance(y_coords_dataset, len));
 
   printf("choose splitting dimension (0=x, 1=y) -> %d\n",
-         choose_splitting_dimension(x_coords_dataset,
-                                    y_coords_dataset, len));
+         choose_splitting_dimension(x_coords_dataset, y_coords_dataset, len));
 
   return 0;
 }
@@ -106,18 +117,30 @@ int choose_splitting_dimension(float_t **x_dataset_ptr, float_t **y_dataset_ptr,
   return y_axis;
 }
 
-float_t get_dataset_variance(kpoint **arr, int len, int axis) {
-  float_t sum = 0.0, sum1 = 0.0;
-  for (int i = 0; i < len; i++) {
-    sum += (*arr[i]).coords[axis];
+float_t get_max_value_dataset(kpoint **arr, int len, int axis) {
+  float_t temp = (*arr[0]).coords[axis];
+  for (int i = 1; i < len; i++) {
+    if ((*arr[i]).coords[axis] > temp) {
+      temp = (*arr[i]).coords[axis];
+    }
   }
 
-  float_t average = sum / (float_t)len;
-  for (int i = 0; i < len; i++) {
-    sum1 = sum1 + pow(((*arr[i]).coords[axis] - average), 2);
+  return temp;
+}
+
+float_t get_min_value_dataset(kpoint **arr, int len, int axis) {
+  float_t temp = (*arr[0]).coords[axis];
+  for (int i = 1; i < len; i++) {
+    if ((*arr[i]).coords[axis] < temp) {
+      temp = (*arr[i]).coords[axis];
+    }
   }
 
-  return sum1 / (float_t)len;
+  return temp;
+}
+
+float_t get_dataset_extent(kpoint **arr, int len, int axis) {
+  return get_max_value_dataset(arr, len, axis) - get_min_value_dataset(arr, len, axis);
 }
 
 float_t get_array_variance(float_t **arr, int len) {
@@ -163,14 +186,16 @@ int cmpfunc_x_axis(const void *a, const void *b) {
   kpoint **ptr_a = (kpoint **)a;
   kpoint **ptr_b = (kpoint **)b;
 
-  return (((**ptr_a).coords[x_axis] > (**ptr_b).coords[x_axis]) - ((**ptr_a).coords[x_axis] < (**ptr_b).coords[x_axis]));
+  return (((**ptr_a).coords[x_axis] > (**ptr_b).coords[x_axis]) -
+          ((**ptr_a).coords[x_axis] < (**ptr_b).coords[x_axis]));
 }
 
 int cmpfunc_y_axis(const void *a, const void *b) {
   kpoint **ptr_a = (kpoint **)a;
   kpoint **ptr_b = (kpoint **)b;
 
-  return (((**ptr_a).coords[y_axis] > (**ptr_b).coords[y_axis]) - ((**ptr_a).coords[y_axis] < (**ptr_b).coords[y_axis]));
+  return (((**ptr_a).coords[y_axis] > (**ptr_b).coords[y_axis]) -
+          ((**ptr_a).coords[y_axis] < (**ptr_b).coords[y_axis]));
 }
 
 int cmpfunc(const void *a, const void *b) {
