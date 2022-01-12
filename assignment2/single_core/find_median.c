@@ -26,6 +26,7 @@ struct kdnode {
 float_t nlogn_median(float_t *arr, int len);
 void get_axis_coord(kpoint *dataset, float_t *arr, int len, int axis);
 void get_axis_coord_ptr(kpoint *dataset, float_t **arr, int len, int axis);
+void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len);
 int cmpfunc(const void *a, const void *b);
 int cmpfunc_ptr(const void *a, const void *b);
 float_t get_array_variance(float_t **arr, int len);
@@ -37,8 +38,8 @@ int main(int argc, char *argv[]) {
 
   kpoint dataset[7] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7}, {8, 1}, {7, 2}};
   int len = sizeof(dataset) / sizeof(dataset[0]);
-  float_t x_axis_dataset[len];
-  float_t y_axis_dataset[len];
+  // float_t x_axis_dataset[len];
+  // float_t y_axis_dataset[len];
 
   // get_axis_coord(dataset, x_axis_dataset, len, x_axis);
   // get_axis_coord(dataset, y_axis_dataset, len, y_axis);
@@ -47,27 +48,33 @@ int main(int argc, char *argv[]) {
   // printf("median y_axis: %f\n", nlogn_median(y_axis_dataset, len));
 
   // try sorting only pointers
-  float_t *x_ordered_dataset_ptr[len];
-  float_t *y_ordered_dataset_ptr[len];
+  
+  kpoint *dataset_ptrs[len];
 
-  get_axis_coord_ptr(dataset, x_ordered_dataset_ptr, len, x_axis);
-  qsort(x_ordered_dataset_ptr, len, sizeof(float_t *), cmpfunc_ptr);
+  get_dataset_ptrs(dataset, dataset_ptrs, len);
+  qsort(dataset_ptrs, len, sizeof(kpoint *), cmpfunc_x_axis);
+
+  float_t *x_coords_dataset[len];
+  float_t *y_coords_dataset[len];
+
+  get_axis_coord_ptr(dataset, x_coords_dataset, len, x_axis);
+  qsort(x_coords_dataset, len, sizeof(float_t *), cmpfunc_ptr);
   printf("last x of the ordered dataset by x: %f\n",
-         *x_ordered_dataset_ptr[len - 1]);
+         *x_coords_dataset[len - 1]);
 
-  get_axis_coord_ptr(dataset, y_ordered_dataset_ptr, len, y_axis);
-  qsort(y_ordered_dataset_ptr, len, sizeof(float_t *), cmpfunc_ptr);
+  get_axis_coord_ptr(dataset, y_coords_dataset, len, y_axis);
+  qsort(y_coords_dataset, len, sizeof(float_t *), cmpfunc_ptr);
   printf("last y of the ordered dataset by y: %f\n",
-         *y_ordered_dataset_ptr[len - 1]);
+         *y_coords_dataset[len - 1]);
 
   printf("variance of x components of dataset: %f\n",
-         get_array_variance(x_ordered_dataset_ptr, len));
+         get_array_variance(x_coords_dataset, len));
   printf("variance of y components of dataset: %f\n",
-         get_array_variance(y_ordered_dataset_ptr, len));
+         get_array_variance(y_coords_dataset, len));
 
   printf("choose splitting dimension (0=x, 1=y) -> %d\n",
-         choose_splitting_dimension(x_ordered_dataset_ptr,
-                                    y_ordered_dataset_ptr, len));
+         choose_splitting_dimension(x_coords_dataset,
+                                    y_coords_dataset, len));
 
   return 0;
 }
@@ -103,6 +110,12 @@ float_t get_array_variance(float_t **arr, int len) {
   }
 
   return sum1 / (float_t)len;
+}
+
+void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len) {
+  for (int i = 0; i < len; i++) {
+    dataset_ptrs[i] = &dataset[i];
+  }
 }
 
 void get_axis_coord_ptr(kpoint *dataset, float_t **arr, int len, int axis) {
