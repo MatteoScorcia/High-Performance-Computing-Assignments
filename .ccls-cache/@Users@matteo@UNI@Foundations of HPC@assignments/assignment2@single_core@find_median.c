@@ -33,8 +33,7 @@ void get_axis_coord_ptr(kpoint *dataset, float_t **arr, int len, int axis);
 float_t get_array_variance(float_t **arr, int len);
 int choose_splitting_dimension_variance(float_t **x_dataset_ptr,
                                         float_t **y_dataset_ptr, int len);
-int cmpfunc_x_axis(const void *a, const void *b);
-int cmpfunc_y_axis(const void *a, const void *b);
+int cmpfunc_ptr(const void *a, const void *b);
 
 // actual functions used to work with dataset pointers
 void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len);
@@ -45,7 +44,8 @@ kpoint *choose_splitting_point(kpoint **x_ordered_dataset,
                                kpoint **y_ordered_dataset, int len,
                                int chosen_axis);
 struct kdnode *build_kdtree(kpoint *dataset, int len, int ndim, int axis);
-int cmpfunc_ptr(const void *a, const void *b);
+int cmpfunc_x_axis(const void *a, const void *b);
+int cmpfunc_y_axis(const void *a, const void *b);
 
 int main(int argc, char *argv[]) {
 
@@ -108,15 +108,24 @@ int main(int argc, char *argv[]) {
   //        choose_splitting_dimension_variance(x_coords_dataset,
   //        y_coords_dataset,
   //                                            len));
-
+ 
   return 0;
 }
 
 struct kdnode *build_kdtree(kpoint *dataset, int len, int ndim, int axis) {
   if (len == 1) {
-    struct kdnode leaf = {axis, dataset[0], NULL, NULL};
-    return &leaf;
+    struct kdnode* leaf = malloc(sizeof(struct kdnode));
+    leaf->axis = axis;
+    leaf->split = dataset[0];
+    leaf->left = NULL;
+    leaf->right = NULL;
+    return leaf;
   }
+
+  struct kdnode *node = malloc(sizeof(struct kdnode));
+  
+  int myaxis = choose_splitting_dimension(kpoint **x_ordered_dataset, kpoint **y_ordered_dataset, int len)
+
 }
 
 kpoint *choose_splitting_point(kpoint **x_ordered_dataset,
@@ -152,12 +161,22 @@ void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len) {
   }
 }
 
-int cmpfunc_ptr(const void *a, const void *b) {
-  float_t **ptr_a = (float_t **)a;
-  float_t **ptr_b = (float_t **)b;
+int cmpfunc_x_axis(const void *a, const void *b) {
+  kpoint **ptr_a = (kpoint **)a;
+  kpoint **ptr_b = (kpoint **)b;
 
-  return ((**ptr_a > **ptr_b) - (**ptr_a < **ptr_b));
+  return (((**ptr_a).coords[x_axis] > (**ptr_b).coords[x_axis]) -
+          ((**ptr_a).coords[x_axis] < (**ptr_b).coords[x_axis]));
 }
+
+int cmpfunc_y_axis(const void *a, const void *b) {
+  kpoint **ptr_a = (kpoint **)a;
+  kpoint **ptr_b = (kpoint **)b;
+
+  return (((**ptr_a).coords[y_axis] > (**ptr_b).coords[y_axis]) -
+          ((**ptr_a).coords[y_axis] < (**ptr_b).coords[y_axis]));
+}
+
 
 int choose_splitting_dimension_variance(float_t **x_dataset_ptr,
                                         float_t **y_dataset_ptr, int len) {
@@ -218,20 +237,11 @@ void get_axis_coord(kpoint *dataset, float_t *arr, int len, int axis) {
   }
 }
 
-int cmpfunc_x_axis(const void *a, const void *b) {
-  kpoint **ptr_a = (kpoint **)a;
-  kpoint **ptr_b = (kpoint **)b;
+int cmpfunc_ptr(const void *a, const void *b) {
+  float_t **ptr_a = (float_t **)a;
+  float_t **ptr_b = (float_t **)b;
 
-  return (((**ptr_a).coords[x_axis] > (**ptr_b).coords[x_axis]) -
-          ((**ptr_a).coords[x_axis] < (**ptr_b).coords[x_axis]));
-}
-
-int cmpfunc_y_axis(const void *a, const void *b) {
-  kpoint **ptr_a = (kpoint **)a;
-  kpoint **ptr_b = (kpoint **)b;
-
-  return (((**ptr_a).coords[y_axis] > (**ptr_b).coords[y_axis]) -
-          ((**ptr_a).coords[y_axis] < (**ptr_b).coords[y_axis]));
+  return ((**ptr_a > **ptr_b) - (**ptr_a < **ptr_b));
 }
 
 int cmpfunc(const void *a, const void *b) {
