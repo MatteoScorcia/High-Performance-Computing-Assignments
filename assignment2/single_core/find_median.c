@@ -123,9 +123,32 @@ struct kdnode *build_kdtree(kpoint *dataset, int len, int ndim, int axis) {
   }
 
   struct kdnode *node = malloc(sizeof(struct kdnode));
-  
-  int myaxis = choose_splitting_dimension(kpoint **x_ordered_dataset, kpoint **y_ordered_dataset, int len)
 
+  kpoint *x_ordered_dataset[len];
+  kpoint *y_ordered_dataset[len];
+
+  qsort(x_ordered_dataset, len, sizeof(kpoint *), cmpfunc_x_axis);
+  qsort(y_ordered_dataset, len, sizeof(kpoint *), cmpfunc_y_axis);
+
+  int chosen_axis = choose_splitting_dimension(x_ordered_dataset, y_ordered_dataset, len);
+  kpoint *split_point = choose_splitting_point(x_ordered_dataset, y_ordered_dataset, len, chosen_axis);
+
+  kpoint *left_points, *right_points;
+
+  if (chosen_axis == x_axis) {
+    kpoint *left_points = x_ordered_dataset[0]; //sorted points from 0 to len/2
+    kpoint *right_points = x_ordered_dataset[len/2 + 1]; //sorted points from len/2 + 1 to len
+  } else {
+    kpoint *left_points = y_ordered_dataset[0]; //sorted points from 0 to len/2
+    kpoint *right_points = y_ordered_dataset[len/2 + 1]; //sorted points from len/2 + 1 to len
+  }
+
+  node->axis = chosen_axis;
+  node->split = *split_point;
+  node->left = build_kdtree(left_points, len/2, ndim, chosen_axis);
+  node->right = build_kdtree(right_points, len/2 + 1, ndim, chosen_axis);
+
+  return node;
 }
 
 kpoint *choose_splitting_point(kpoint **x_ordered_dataset,
