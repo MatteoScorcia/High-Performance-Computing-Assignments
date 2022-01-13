@@ -83,6 +83,8 @@ int main(int argc, char *argv[]) {
 
   printf("chosen splitting point: (%f,%f)\n", (*split_point).coords[x_axis],
          (*split_point).coords[y_axis]);
+  
+  build_kdtree(dataset, len, 2, 0);
 
   // --------------------------------   working separately on the 2 dimensions
   // printf("\nworking separately on the 2 dimensions ----- \n");
