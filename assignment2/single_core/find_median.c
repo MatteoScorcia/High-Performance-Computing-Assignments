@@ -34,11 +34,14 @@ int cmpfunc_ptr(const void *a, const void *b);
 float_t get_array_variance(float_t **arr, int len);
 float_t get_dataset_extent(kpoint **arr, int len, int axis);
 
-int choose_splitting_dimension_variance(float_t **x_dataset_ptr, float_t **y_dataset_ptr,
-                               int len);
+int choose_splitting_dimension_variance(float_t **x_dataset_ptr,
+                                        float_t **y_dataset_ptr, int len);
 
-int choose_splitting_dimension(kpoint **x_ordered_dataset, kpoint **y_ordered_dataset, int len);
-kpoint *choose_splitting_point(kpoint **x_ordered_dataset, kpoint **y_ordered_dataset, int len, int chosen_axis);
+int choose_splitting_dimension(kpoint **x_ordered_dataset,
+                               kpoint **y_ordered_dataset, int len);
+kpoint *choose_splitting_point(kpoint **x_ordered_dataset,
+                               kpoint **y_ordered_dataset, int len,
+                               int chosen_axis);
 
 int main(int argc, char *argv[]) {
 
@@ -75,15 +78,19 @@ int main(int argc, char *argv[]) {
   printf("extent of y components of dataset: %f\n",
          get_dataset_extent(y_ordered_dataset, len, y_axis));
 
-  int chosen_axis = choose_splitting_dimension(x_ordered_dataset, y_ordered_dataset, len);
+  int chosen_axis =
+      choose_splitting_dimension(x_ordered_dataset, y_ordered_dataset, len);
 
   printf("choose splitting dimension (0=x, 1=y) -> %d\n", chosen_axis);
-  
-  kpoint *split_point = choose_splitting_point(x_ordered_dataset, y_ordered_dataset, len, chosen_axis);
 
-  printf("chosen splitting point: (%f,%f)\n", (*split_point).coords[x_axis], (*split_point).coords[y_axis]);
+  kpoint *split_point = choose_splitting_point(
+      x_ordered_dataset, y_ordered_dataset, len, chosen_axis);
 
-  // working separately on the 2 dimensions
+  printf("chosen splitting point: (%f,%f)\n", (*split_point).coords[x_axis],
+         (*split_point).coords[y_axis]);
+
+
+  // --------------------------------   working separately on the 2 dimensions
   printf("\nworking separately on the 2 dimensions ----- \n");
   float_t *x_coords_dataset[len];
   float_t *y_coords_dataset[len];
@@ -104,30 +111,34 @@ int main(int argc, char *argv[]) {
          get_array_variance(y_coords_dataset, len));
 
   printf("choose splitting dimension (0=x, 1=y) -> %d\n",
-         choose_splitting_dimension_variance(x_coords_dataset, y_coords_dataset, len));
+         choose_splitting_dimension_variance(x_coords_dataset, y_coords_dataset,
+                                             len));
 
   return 0;
 }
 
-kpoint *choose_splitting_point(kpoint **x_ordered_dataset, kpoint **y_ordered_dataset, int len, int chosen_axis) {
+kpoint *choose_splitting_point(kpoint **x_ordered_dataset,
+                               kpoint **y_ordered_dataset, int len,
+                               int chosen_axis) {
   if (chosen_axis == 0) {
     return x_ordered_dataset[len / 2];
   }
   return y_ordered_dataset[len / 2];
 }
 
-int choose_splitting_dimension(kpoint **x_ordered_dataset, kpoint **y_ordered_dataset, int len) {
+int choose_splitting_dimension(kpoint **x_ordered_dataset,
+                               kpoint **y_ordered_dataset, int len) {
   float_t x_extent = get_dataset_extent(x_ordered_dataset, len, x_axis);
   float_t y_extent = get_dataset_extent(y_ordered_dataset, len, y_axis);
 
   if (x_extent > y_extent) {
     return x_axis;
   }
-    return y_axis;
+  return y_axis;
 }
 
-int choose_splitting_dimension_variance(float_t **x_dataset_ptr, float_t **y_dataset_ptr,
-                               int len) {
+int choose_splitting_dimension_variance(float_t **x_dataset_ptr,
+                                        float_t **y_dataset_ptr, int len) {
   float_t var_x = get_array_variance(x_dataset_ptr, len);
   float_t var_y = get_array_variance(y_dataset_ptr, len);
 
@@ -136,7 +147,8 @@ int choose_splitting_dimension_variance(float_t **x_dataset_ptr, float_t **y_dat
   return y_axis;
 }
 
-float_t get_max_value_dataset(kpoint **arr, int len, int axis) { //not necessary :(
+float_t get_max_value_dataset(kpoint **arr, int len,
+                              int axis) { // not necessary :(
   float_t temp = (*arr[0]).coords[axis];
   for (int i = 1; i < len; i++) {
     if ((*arr[i]).coords[axis] > temp) {
@@ -158,8 +170,10 @@ float_t get_min_value_dataset(kpoint **arr, int len, int axis) {
   return temp;
 }
 
-float_t get_dataset_extent(kpoint **arr, int len, int axis) { //suppose datased ordered in axis dimension
-  return ((*arr[len-1]).coords[axis] - (*arr[0]).coords[0]);
+float_t
+get_dataset_extent(kpoint **arr, int len,
+                   int axis) { // suppose datased ordered in axis dimension
+  return ((*arr[len - 1]).coords[axis] - (*arr[0]).coords[0]);
 }
 
 float_t get_array_variance(float_t **arr, int len) {
