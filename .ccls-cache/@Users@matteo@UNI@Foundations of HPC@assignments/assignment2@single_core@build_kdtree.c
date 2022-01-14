@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +10,9 @@
 #endif
 #define NDIM 2
 
+#define x_axis 0
+#define y_axis 1
+
 typedef struct {
   float_t coords[NDIM];
 } kpoint;
@@ -19,70 +23,219 @@ struct kdnode {
   struct kdnode *left, *right;
 };
 
-struct kdnode *build_kdtree(kpoint *points, int N, int ndim, int axis);
-void quicksort(kpoint *data, int start, int end);
-void insertion_sort(kpoint *data, int start, int end);
-int compare_ge(const void *A, const void *B);
-int compare_ptr(const void *A, const void *B);
+//kd-tree build functions
+struct kdnode *build_kdtree(kpoint **dataset_ptr, int len, int ndim, int axis);
+int choose_splitting_dimension(kpoint **dataset_ptrs, int len);
+kpoint *choose_splitting_point(kpoint **dataset_ptrs, int len, int chosen_axis);
+float_t get_dataset_extent(kpoint **arr, int len, int axis);
+float_t get_max_value_dataset(kpoint **arr, int len, int axis);
+float_t get_min_value_dataset(kpoint **arr, int len, int axis);
+int cmpfunc_x_axis(const void *a, const void *b);
+int cmpfunc_y_axis(const void *a, const void *b);
+
+//utility functions
+void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len);
+void copy_dataset_ptrs(kpoint **dataset_ptrs, kpoint **new_arr, int len);
+void print_dataset(kpoint *dataset, int len);
+void print_dataset_ptr(kpoint **dataset_ptr, int len);
 
 int main(int argc, char *argv[]) {
 
-  kpoint root = {{0, 0}};
+  kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
+                       {8, 1}, {7, 2}, {8, 9}, {1, 1}};
+  int len = sizeof(dataset) / sizeof(dataset[0]);
 
-  kpoint left = {{1, 0}};
-  kpoint right = {{0, 2}};
+  kpoint **dataset_ptrs = malloc(len);
+  get_dataset_ptrs(dataset, dataset_ptrs, len);
 
-  struct kdnode node1 = {0, left, NULL, NULL};
-  struct kdnode node2 = {1, right, NULL, NULL};
-  struct kdnode root_node = {0, root, &node1, &node2};
+  printf("extent of x components of dataset: %f\n",
+         get_dataset_extent(dataset_ptrs, len, x_axis));
 
-  printf("root node -> %f,%f\n", root_node.split.coords[0],
-         root_node.split.coords[1]);
-  printf("root node left pointer -> %f,%f\n", root_node.left->split.coords[0],
-         root_node.left->split.coords[1]);
-  printf("root node right pointer -> %f,%f\n", root_node.right->split.coords[0],
-         root_node.right->split.coords[1]);
+  printf("extent of y components of dataset: %f\n",
+         get_dataset_extent(dataset_ptrs, len, y_axis));
 
-  kpoint dataset[6] = {{2, 3}, {5, 4}, {9, 6}, {4, 7}, {8, 1}, {7, 2}};
+  int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
 
-  int dataset_len = (sizeof(dataset) / sizeof(kpoint));
+  printf("choose splitting dimension (0=x, 1=y) -> %d\n", chosen_axis);
 
-  float_t *ptrs_ordered_by_x[dataset_len];
-  float_t *ptrs_ordered_by_y[dataset_len];
+  if (chosen_axis == x_axis) {
+    qsort(dataset_ptrs, len, sizeof(kpoint *), cmpfunc_x_axis);
+  } else if (chosen_axis == y_axis) {
+    qsort(dataset_ptrs, len, sizeof(kpoint *), cmpfunc_y_axis);
+  }
 
-  float_t arr[3] = {3.0, 3.5, 1.8};
-  float_t *ptr_arr[3] = {&arr[0], &arr[1], &arr[2]};
+  kpoint *split_point = choose_splitting_point(dataset_ptrs, len, chosen_axis);
+  printf("chosen splitting point: (%f,%f)\n", (*split_point).coords[x_axis],
+         (*split_point).coords[y_axis]);
 
-  printf("%p %p %p \n", ptr_arr[0], ptr_arr[1], ptr_arr[2]);
+  printf("\n--- end of testing ---\n\n");
 
-  qsort(ptr_arr, 3, sizeof(float_t), compare_ptr);
-
-  printf("%p %p %p \n", ptr_arr[0], ptr_arr[1], ptr_arr[2]);
-  printf("%f %f %f \n", arr[0], arr[1], arr[2]);
-  printf("%d \n", compare_ptr(ptr_arr[2], ptr_arr[0]));
+  get_dataset_ptrs(dataset, dataset_ptrs, len);
+  build_kdtree(dataset_ptrs, len, 2, 0);
 
   return 0;
 }
 
+struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int ndim,
+                            int axis) {
+  printf("len: %d\n", len);
+  if (len == 1) {
+    struct kdnode *leaf = malloc(sizeof(struct kdnode));
+    leaf->axis = axis;
+    leaf->split = *dataset_ptrs[0];
+    leaf->left = NULL;
+    leaf->right = NULL;
 
-void sort_by_axis(int axis, kpoint *dataset) {}
+    printf("chosen axis: %d\n", axis);
+    printf("chosen splitting point: (%f,%f)\n\n", dataset_ptrs[0]->coords[0],
+           dataset_ptrs[0]->coords[1]);
+    return leaf;
+  } else if (len == 0) {
+    printf("\n");
+    return NULL;
+  }
 
-int compare_ge(const void *A, const void *B) {
-  float_t *a = (float_t *)A;
-  float_t *b = (float_t *)B;
+  printf("input dataset: \n");
+  print_dataset_ptr(dataset_ptrs, len);
+  printf("\n");
 
-  return (a >= b);
+  struct kdnode *node = malloc(sizeof(struct kdnode));
+
+  int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
+
+  if (chosen_axis == x_axis) {
+    qsort(dataset_ptrs, len, sizeof(kpoint *), cmpfunc_x_axis);
+  } else {
+    qsort(dataset_ptrs, len, sizeof(kpoint *), cmpfunc_y_axis);
+  }
+
+  printf("sorted dataset\n");
+  print_dataset_ptr(dataset_ptrs, len);
+  printf("\n");
+
+  kpoint *split_point = choose_splitting_point(dataset_ptrs, len, chosen_axis);
+
+  printf("chosen axis: %d\n", chosen_axis);
+  printf("chosen splitting point: (%f,%f)\n", (*split_point).coords[0],
+         (*split_point).coords[1]);
+
+  kpoint **left_points, **right_points;
+
+  int median = ceil(len / 2.0);
+  int len_left = median - 1;    // length of the left points
+  int len_right = len - median; // length of the right points
+
+  printf("median: %d, len_left: %d, len_right: %d\n\n", median, len_left,
+         len_right);
+
+  left_points = &dataset_ptrs[0];       // starting pointer of left_points
+  right_points = &dataset_ptrs[median]; // starting pointer of right_points
+
+  node->axis = chosen_axis;
+  node->split = *split_point;
+  node->left = build_kdtree(left_points, len_left, ndim, chosen_axis);
+  node->right = build_kdtree(right_points, len_right, ndim, chosen_axis);
+
+  return node;
 }
 
-int compare_ptr(const void *a, const void *b) {
-  float_t *ptr_a = (float_t *)a;
-  float_t *ptr_b = (float_t *)b;
-
-  return ((*ptr_a > *ptr_b) - (*ptr_a < *ptr_b));
+kpoint *choose_splitting_point(kpoint **ordered_dataset, int len,
+                               int chosen_axis) {
+  int median_idx = ceil(len / 2.0) - 1;
+  return ordered_dataset[median_idx];
 }
 
-float_t nlogn_median(float_t *arr, int len) {
-  qsort(arr, len, sizeof(float_t), compare_ge);
-  return arr[len / 2];
+int choose_splitting_dimension(kpoint **dataset_ptrs, int len) {
+  float_t x_extent = get_dataset_extent(dataset_ptrs, len, x_axis);
+  float_t y_extent = get_dataset_extent(dataset_ptrs, len, y_axis);
+
+  if (x_extent > y_extent) {
+    return x_axis;
+  }
+  return y_axis;
 }
 
+float_t get_dataset_extent(kpoint **arr, int len, int axis) {
+  float_t max = get_max_value_dataset(arr, len, axis);
+  float_t min = get_min_value_dataset(arr, len, axis);
+
+  return (max - min);
+}
+
+int cmpfunc_x_axis(const void *a, const void *b) {
+  kpoint **ptr_a = (kpoint **)a;
+  kpoint **ptr_b = (kpoint **)b;
+
+  return (((**ptr_a).coords[x_axis] > (**ptr_b).coords[x_axis]) -
+          ((**ptr_a).coords[x_axis] < (**ptr_b).coords[x_axis]));
+}
+
+int cmpfunc_y_axis(const void *a, const void *b) {
+  kpoint **ptr_a = (kpoint **)a;
+  kpoint **ptr_b = (kpoint **)b;
+
+  return (((**ptr_a).coords[y_axis] > (**ptr_b).coords[y_axis]) -
+          ((**ptr_a).coords[y_axis] < (**ptr_b).coords[y_axis]));
+}
+
+float_t get_max_value_dataset(kpoint **arr, int len, int axis) {
+  float_t temp = (*arr[0]).coords[axis];
+  for (int i = 1; i < len; i++) {
+    if ((*arr[i]).coords[axis] > temp) {
+      temp = (*arr[i]).coords[axis];
+    }
+  }
+
+  return temp;
+}
+
+float_t get_min_value_dataset(kpoint **arr, int len, int axis) {
+  float_t temp = (*arr[0]).coords[axis];
+  for (int i = 1; i < len; i++) {
+    if ((*arr[i]).coords[axis] < temp) {
+      temp = (*arr[i]).coords[axis];
+    }
+  }
+
+  return temp;
+}
+
+//utility func
+void copy_dataset_ptrs(kpoint **dataset_ptrs, kpoint **new_arr, int len) {
+  for (int i = 0; i < len; i++) {
+    new_arr[i] = dataset_ptrs[i];
+  }
+}
+
+//utility func
+void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len) {
+  for (int i = 0; i < len; i++) {
+    dataset_ptrs[i] = &dataset[i];
+  }
+}
+
+// utility func
+void print_dataset_ptr(kpoint **dataset_ptr, int len) {
+  for (int i = 0; i < len; i++) {
+    printf("dataset[%d] -> (%f,%f)\n", i, dataset_ptr[i]->coords[0],
+           dataset_ptr[i]->coords[1]);
+  }
+}
+
+// utility func
+void print_dataset(kpoint *dataset, int len) {
+  for (int i = 0; i < len; i++) {
+    printf("dataset[%d] -> (%f,%f)\n", i, dataset[i].coords[0],
+           dataset[i].coords[1]);
+  }
+  printf("\n");
+}
+
+// useless function, here just to understand how to
+// write a cmpfunc that uses pointers
+int cmpfunc_ptr(const void *a, const void *b) {
+  float_t **ptr_a = (float_t **)a;
+  float_t **ptr_b = (float_t **)b;
+
+  return ((**ptr_a > **ptr_b) - (**ptr_a < **ptr_b));
+}
