@@ -23,7 +23,7 @@ struct kdnode {
   struct kdnode *left, *right;
 };
 
-//kd-tree build functions
+// kd-tree build functions
 struct kdnode *build_kdtree(kpoint **dataset_ptr, int len, int ndim, int axis);
 int choose_splitting_dimension(kpoint **dataset_ptrs, int len);
 kpoint *choose_splitting_point(kpoint **dataset_ptrs, int len, int chosen_axis);
@@ -33,7 +33,7 @@ float_t get_min_value_dataset(kpoint **arr, int len, int axis);
 int cmpfunc_x_axis(const void *a, const void *b);
 int cmpfunc_y_axis(const void *a, const void *b);
 
-//utility functions
+// utility functions
 void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len);
 void copy_dataset_ptrs(kpoint **dataset_ptrs, kpoint **new_arr, int len);
 void print_dataset(kpoint *dataset, int len);
@@ -200,14 +200,14 @@ float_t get_min_value_dataset(kpoint **arr, int len, int axis) {
   return temp;
 }
 
-//utility func
+// utility func
 void copy_dataset_ptrs(kpoint **dataset_ptrs, kpoint **new_arr, int len) {
   for (int i = 0; i < len; i++) {
     new_arr[i] = dataset_ptrs[i];
   }
 }
 
-//utility func
+// utility func
 void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len) {
   for (int i = 0; i < len; i++) {
     dataset_ptrs[i] = &dataset[i];
