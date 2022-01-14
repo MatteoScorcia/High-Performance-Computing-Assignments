@@ -47,9 +47,12 @@ struct kdnode *build_kdtree(kpoint *dataset, int len, int ndim, int axis);
 int cmpfunc_x_axis(const void *a, const void *b);
 int cmpfunc_y_axis(const void *a, const void *b);
 
+void print_dataset(kpoint **dataset, int len);
+
 int main(int argc, char *argv[]) {
 
-  kpoint dataset[7] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7}, {8, 1}, {7, 2}};
+  kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
+                       {8, 1}, {7, 2}, {8, 9}, {1, 1}};
   int len = sizeof(dataset) / sizeof(dataset[0]);
 
   kpoint *x_ordered_dataset[len];
@@ -83,45 +86,30 @@ int main(int argc, char *argv[]) {
 
   printf("chosen splitting point: (%f,%f)\n", (*split_point).coords[x_axis],
          (*split_point).coords[y_axis]);
-  
+
+  printf("\n--- end of testing ---\n\n");
+
   build_kdtree(dataset, len, 2, 0);
 
-  // --------------------------------   working separately on the 2 dimensions
-  // printf("\nworking separately on the 2 dimensions ----- \n");
-  // float_t *x_coords_dataset[len];
-  // float_t *y_coords_dataset[len];
-  //
-  // get_axis_coord_ptr(dataset, x_coords_dataset, len, x_axis);
-  // qsort(x_coords_dataset, len, sizeof(float_t *), cmpfunc_ptr);
-  // printf("last x of the ordered dataset by x: %f\n",
-  //        *x_coords_dataset[len - 1]);
-  //
-  // get_axis_coord_ptr(dataset, y_coords_dataset, len, y_axis);
-  // qsort(y_coords_dataset, len, sizeof(float_t *), cmpfunc_ptr);
-  // printf("last y of the ordered dataset by y: %f\n",
-  //        *y_coords_dataset[len - 1]);
-  //
-  // printf("variance of x components of dataset: %f\n",
-  //        get_array_variance(x_coords_dataset, len));
-  // printf("variance of y components of dataset: %f\n",
-  //        get_array_variance(y_coords_dataset, len));
-  //
-  // printf("choose splitting dimension (0=x, 1=y) -> %d\n",
-  //        choose_splitting_dimension_variance(x_coords_dataset,
-  //        y_coords_dataset,
-  //                                            len));
- 
   return 0;
 }
 
 struct kdnode *build_kdtree(kpoint *dataset, int len, int ndim, int axis) {
+  printf("len: %d\n", len);
   if (len == 1) {
-    struct kdnode* leaf = malloc(sizeof(struct kdnode));
+    struct kdnode *leaf = malloc(sizeof(struct kdnode));
     leaf->axis = axis;
     leaf->split = dataset[0];
     leaf->left = NULL;
     leaf->right = NULL;
+
+    printf("chosen axis: %d\n", axis);
+    printf("chosen splitting point: (%f,%f)\n\n", dataset[0].coords[0],
+           dataset[0].coords[1]);
     return leaf;
+  }else if (len == 0) {
+    printf("\n");
+    return NULL;
   }
 
   struct kdnode *node = malloc(sizeof(struct kdnode));
@@ -129,37 +117,68 @@ struct kdnode *build_kdtree(kpoint *dataset, int len, int ndim, int axis) {
   kpoint *x_ordered_dataset[len];
   kpoint *y_ordered_dataset[len];
 
+  get_dataset_ptrs(dataset, x_ordered_dataset, len);
+  get_dataset_ptrs(dataset, y_ordered_dataset, len);
+
   qsort(x_ordered_dataset, len, sizeof(kpoint *), cmpfunc_x_axis);
   qsort(y_ordered_dataset, len, sizeof(kpoint *), cmpfunc_y_axis);
 
-  int chosen_axis = choose_splitting_dimension(x_ordered_dataset, y_ordered_dataset, len);
-  kpoint *split_point = choose_splitting_point(x_ordered_dataset, y_ordered_dataset, len, chosen_axis);
+  printf("sorting done\n");
+
+  int chosen_axis =
+      choose_splitting_dimension(x_ordered_dataset, y_ordered_dataset, len);
+  kpoint *split_point = choose_splitting_point(
+      x_ordered_dataset, y_ordered_dataset, len, chosen_axis);
+
+  printf("chosen axis: %d\n", chosen_axis);
+  printf("chosen splitting point: (%f,%f)\n", (*split_point).coords[0],
+         (*split_point).coords[1]);
 
   kpoint *left_points, *right_points;
 
+  int median = ceil(len / 2.0); 
+  int len_left = median - 1; // length of the left points 
+  int len_right = len - median; // length of the right points 
+
+  printf("median: %d, len_left: %d, len_right: %d\n\n", median, len_left,
+         len_right);
+
   if (chosen_axis == x_axis) {
-    kpoint *left_points = x_ordered_dataset[0]; //sorted points from 0 to len/2
-    kpoint *right_points = x_ordered_dataset[len/2 + 1]; //sorted points from len/2 + 1 to len
+    left_points = x_ordered_dataset[0]; // sorted points from 0 to median - 1
+    right_points =
+        x_ordered_dataset[median + 1]; // sorted points from median + 1 to len
+        print_dataset(x_ordered_dataset, len);
   } else {
-    kpoint *left_points = y_ordered_dataset[0]; //sorted points from 0 to len/2
-    kpoint *right_points = y_ordered_dataset[len/2 + 1]; //sorted points from len/2 + 1 to len
+    left_points = y_ordered_dataset[0]; // sorted points from 0 to len/2 - 1
+    right_points =
+        y_ordered_dataset[median + 1]; // sorted points from len/2 + 1 to len
+        print_dataset(y_ordered_dataset, len);
   }
 
   node->axis = chosen_axis;
   node->split = *split_point;
-  node->left = build_kdtree(left_points, len/2, ndim, chosen_axis);
-  node->right = build_kdtree(right_points, len/2 + 1, ndim, chosen_axis);
+  node->left = build_kdtree(left_points, len_left, ndim, chosen_axis);
+  node->right = build_kdtree(right_points, len_right, ndim, chosen_axis);
 
   return node;
+}
+
+//utility func
+void print_dataset(kpoint **dataset, int len) {
+  for (int i = 0; i < len; i++) {
+    printf("dataset[%d] -> (%f,%f)\n", i, dataset[i]->coords[0], dataset[i]->coords[1]);
+  }
+  printf("\n");
 }
 
 kpoint *choose_splitting_point(kpoint **x_ordered_dataset,
                                kpoint **y_ordered_dataset, int len,
                                int chosen_axis) {
+  int median_idx = ceil(len / 2.0) - 1;
   if (chosen_axis == 0) {
-    return x_ordered_dataset[len / 2];
+    return x_ordered_dataset[median_idx];
   }
-  return y_ordered_dataset[len / 2];
+  return y_ordered_dataset[median_idx];
 }
 
 int choose_splitting_dimension(kpoint **x_ordered_dataset,
@@ -201,7 +220,6 @@ int cmpfunc_y_axis(const void *a, const void *b) {
   return (((**ptr_a).coords[y_axis] > (**ptr_b).coords[y_axis]) -
           ((**ptr_a).coords[y_axis] < (**ptr_b).coords[y_axis]));
 }
-
 
 int choose_splitting_dimension_variance(float_t **x_dataset_ptr,
                                         float_t **y_dataset_ptr, int len) {
