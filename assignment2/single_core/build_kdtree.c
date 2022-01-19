@@ -41,8 +41,8 @@ void print_dataset_ptr(kpoint **dataset_ptr, int len);
 
 int main(int argc, char *argv[]) {
 
-  kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
-                       {8, 1}, {7, 2}, {8, 9}, {1, 1}};
+  kpoint dataset[11] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
+                       {8, 1}, {7, 2}, {8, 9}, {1, 1}, {0,5}, {100, 11}};
   int len = sizeof(dataset) / sizeof(dataset[0]);
 
   kpoint **dataset_ptrs = malloc(len);
