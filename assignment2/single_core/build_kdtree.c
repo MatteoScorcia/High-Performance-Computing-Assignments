@@ -2,6 +2,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+#if defined(_OPENMP)
+#define CPU_TIME (clock_gettime( CLOCK_REALTIME, &ts ), (double)ts.tv_sec + \
+		  (double)ts.tv_nsec * 1e-9)
+
+#define CPU_TIME_th (clock_gettime( CLOCK_THREAD_CPUTIME_ID, &myts ), (double)myts.tv_sec +	\
+		     (double)myts.tv_nsec * 1e-9)
+#else
+
+#define CPU_TIME (clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts ), (double)ts.tv_sec + \
+		  (double)ts.tv_nsec * 1e-9)
+#endif
 
 #if !defined(DOUBLE_PRECISION)
 #define float_t float
@@ -34,6 +47,7 @@ int cmpfunc_x_axis(const void *a, const void *b);
 int cmpfunc_y_axis(const void *a, const void *b);
 
 // utility functions
+kpoint *generate_dataset(int len);
 void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len);
 void copy_dataset_ptrs(kpoint **dataset_ptrs, kpoint **new_arr, int len);
 void print_dataset(kpoint *dataset, int len);
@@ -41,11 +55,11 @@ void print_dataset_ptr(kpoint **dataset_ptr, int len);
 
 int main(int argc, char *argv[]) {
 
-  kpoint dataset[11] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
-                       {8, 1}, {7, 2}, {8, 9}, {1, 1}, {0,5}, {100, 11}};
-  int len = sizeof(dataset) / sizeof(dataset[0]);
+  struct  timespec ts;
+  int len = 100000;
+  kpoint *dataset = generate_dataset(len);
 
-  kpoint **dataset_ptrs = malloc(len);
+  kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
   get_dataset_ptrs(dataset, dataset_ptrs, len);
 
   printf("extent of x components of dataset: %f\n",
@@ -71,9 +85,25 @@ int main(int argc, char *argv[]) {
   printf("\n--- end of testing ---\n\n");
 
   get_dataset_ptrs(dataset, dataset_ptrs, len);
+
+  double tstart = CPU_TIME;
   build_kdtree(dataset_ptrs, len, 2, 0);
+  double telapsed = CPU_TIME - tstart;
+
+  printf("elapsed time: %f\n", telapsed);
 
   return 0;
+}
+
+kpoint *generate_dataset(int len) {
+  srand48(time(NULL));
+
+  kpoint *dataset = malloc(len * sizeof(kpoint));
+  for (int i = 0; i < len; i++) {
+    dataset[i].coords[0] = drand48();
+    dataset[i].coords[1] = drand48();
+  }
+  return dataset;
 }
 
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int ndim,

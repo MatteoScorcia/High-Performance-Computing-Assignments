@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
   double res1 = 0, res2 = 0, res3 = 0;
 
-#pragma omp task shared(array, N) untied
+#pragma omp task shared(array, N, res1) untied
 {
   int local_result = 0;
   for (int i = 0; i < N; i++) {
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   res1 += local_result;
 }
 
-#pragma omp task shared(array, N) untied
+#pragma omp task shared(array, N, res2) untied
 {
   int local_result = 0;
   for (int i = 0; i < N; i++) {
@@ -69,6 +69,8 @@ int main(int argc, char *argv[]) {
 }
 
 #pragma omp taskwait
+printf("res1: %f\n", res1);
+printf("res2: %f\n", res2);
 printf("tasks have finished the work!!\n");
 
   double finish_time = CPU_TIME;
