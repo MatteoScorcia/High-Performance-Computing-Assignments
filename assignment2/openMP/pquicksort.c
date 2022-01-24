@@ -74,7 +74,7 @@
 #define HOT       0
 
 #if (!defined(DEBUG) || defined(_OPENMP))
-#define N_dflt    100000
+#define N_dflt    1000000
 #else
 #define N_dflt    10000
 #endif

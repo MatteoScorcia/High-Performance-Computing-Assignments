@@ -68,9 +68,6 @@ int main(int argc, char *argv[]) {
   printf("sizeof kpoint * is %lu bytes, sizeof dataset is %lu bytes\n",
          sizeof(kpoint *), sizeof(kpoint) * len);
 
-  printf("sizeof kdnode is %lu bytes, sizeof tree is %lu bytes\n",
-         sizeof(struct kdnode), sizeof(struct kdnode) * len);
-
   kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
   get_dataset_ptrs(dataset, dataset_ptrs, len);
 

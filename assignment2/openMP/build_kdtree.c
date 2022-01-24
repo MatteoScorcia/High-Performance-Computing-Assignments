@@ -43,12 +43,10 @@ void pqsort(kpoint **data, int start, int end,
             int (*comparator)(const void *, const void *));
 int compare_ge_x_axis(const void *a, const void *b);
 int compare_ge_y_axis(const void *a, const void *b);
-kpoint *generate_dataset(int len);
 
+kpoint *generate_dataset(int len);
 void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len);
 void copy_dataset_ptrs(kpoint **dataset_ptrs, kpoint **new_arr, int len);
-void print_dataset(kpoint *dataset, int len);
-void print_dataset_ptr(kpoint **dataset_ptr, int len);
 
 // kd-tree build functions
 struct kdnode *build_kdtree(kpoint **dataset_ptr, int len, int ndim, int axis, int nthreads);
@@ -58,22 +56,24 @@ float_t get_dataset_extent(kpoint **arr, int len, int axis);
 float_t get_max_value_dataset(kpoint **arr, int len, int axis);
 float_t get_min_value_dataset(kpoint **arr, int len, int axis);
 
+
 int main(int argc, char *argv[]) {
 
   struct timespec ts;
 
-  int len = 1000000;
+  int len = 100000;
   kpoint *dataset = generate_dataset(len);
 
   kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
   get_dataset_ptrs(dataset, dataset_ptrs, len);
   
   int nthreads;
-  #pragma omp parallel shared(nthreads)
+
+  #pragma omp parallel
   {
     #pragma omp single
     {
-      int nthreads = omp_get_num_threads();
+      nthreads = omp_get_num_threads();
       printf("num threads: %d\n", nthreads);
     }
   }
@@ -81,7 +81,13 @@ int main(int argc, char *argv[]) {
   get_dataset_ptrs(dataset, dataset_ptrs, len);
   
   double tstart = CPU_TIME;
-  build_kdtree(dataset_ptrs, len, 2, 0, nthreads);
+  #pragma omp parallel shared(dataset_ptrs) firstprivate(len, nthreads) 
+  {
+    #pragma omp single
+    {
+      build_kdtree(dataset_ptrs, len, 2, 0, nthreads);
+    }
+  }
   double telapsed = CPU_TIME - tstart;
 
   printf("elapsed time: %f\n", telapsed);
@@ -99,11 +105,10 @@ kpoint *generate_dataset(int len) {
   return dataset;
 }
 
-#define task_cutoff 16 
+#define build_cutoff 16 
 
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int ndim,
                             int axis, int nthreads) {
-  printf("input len: %d\n", len);
   if (len == 1) {
     struct kdnode *leaf = malloc(sizeof(struct kdnode));
     leaf->axis = axis;
@@ -119,6 +124,12 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int ndim,
   struct kdnode *node = malloc(sizeof(struct kdnode));
 
   int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
+
+  // if (chosen_axis == x_axis) {
+  //   qsort(dataset_ptrs, len, sizeof(kpoint *), compare_ge_x_axis);
+  // } else {
+  //   qsort(dataset_ptrs, len, sizeof(kpoint *), compare_ge_y_axis);
+  // }
 
   if (chosen_axis == x_axis) {
     pqsort(dataset_ptrs, 0, len, compare_ge_x_axis);
@@ -137,13 +148,11 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int ndim,
   left_points = &dataset_ptrs[0];       // starting pointer of left_points
   right_points = &dataset_ptrs[median]; // starting pointer of right_points
 
-  printf("len_left = %d, len_right = %d\n", len_left, len_right);
-
   node->axis = chosen_axis;
   node->split = *split_point;
-  #pragma omp task shared(nthreads, ndim, chosen_axis) firstprivate(left_points, len_left) mergeable untied 
+  #pragma omp task shared(left_points) firstprivate(len_left, ndim, chosen_axis, nthreads) final(len_left < build_cutoff) mergeable untied
     node->left = build_kdtree(left_points, len_left, ndim, chosen_axis, nthreads);
-  #pragma omp task shared(nthreads, ndim, chosen_axis) firstprivate(right_points, len_right) mergeable untied
+  #pragma omp task shared(right_points) firstprivate(len_right, ndim, chosen_axis, nthreads) final(len_right < build_cutoff) mergeable untied
     node->right = build_kdtree(right_points, len_right, ndim, chosen_axis, nthreads);
   return node;
 }
@@ -201,21 +210,6 @@ void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len) {
   for (int i = 0; i < len; i++) {
     dataset_ptrs[i] = &dataset[i];
   }
-}
-
-void print_dataset_ptr(kpoint **dataset_ptr, int len) {
-  for (int i = 0; i < len; i++) {
-    printf("dataset[%d] -> (%f,%f)\n", i, dataset_ptr[i]->coords[0],
-           dataset_ptr[i]->coords[1]);
-  }
-}
-
-void print_dataset(kpoint *dataset, int len) {
-  for (int i = 0; i < len; i++) {
-    printf("dataset[%d] -> (%f,%f)\n", i, dataset[i].coords[0],
-           dataset[i].coords[1]);
-  }
-  printf("\n");
 }
 
 #define SWAP(A, B, SIZE)                                                       \
@@ -301,7 +295,7 @@ void insertion_sort(kpoint **data, int start, int end,
     }
   }
 }
-#define task_cutoff 4
+#define task_cutoff 16
 #define insertion_cutoff task_cutoff / 2
 
 void pqsort(kpoint **data, int start, int end,
