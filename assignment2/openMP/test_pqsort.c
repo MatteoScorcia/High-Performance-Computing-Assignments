@@ -1,21 +1,24 @@
 #include <math.h>
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <omp.h>
 
 #if defined(_OPENMP)
-#define CPU_TIME (clock_gettime( CLOCK_REALTIME, &ts ), (double)ts.tv_sec + \
-		  (double)ts.tv_nsec * 1e-9)
+#define CPU_TIME                                                               \
+  (clock_gettime(CLOCK_REALTIME, &ts),                                         \
+   (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9)
 
-#define CPU_TIME_th (clock_gettime( CLOCK_THREAD_CPUTIME_ID, &myts ), (double)myts.tv_sec +	\
-		     (double)myts.tv_nsec * 1e-9)
+#define CPU_TIME_th                                                            \
+  (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &myts),                              \
+   (double)myts.tv_sec + (double)myts.tv_nsec * 1e-9)
 
 #else
 
-#define CPU_TIME (clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts ), (double)ts.tv_sec + \
-		  (double)ts.tv_nsec * 1e-9)
+#define CPU_TIME                                                               \
+  (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts),                               \
+   (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9)
 #endif
 
 #if !defined(DOUBLE_PRECISION)
@@ -61,12 +64,22 @@ int main(int argc, char *argv[]) {
 
   int len = 1000000;
   kpoint *dataset = generate_dataset(len);
-  
+
+  printf("sizeof kpoint * is %lu bytes, sizeof dataset is %lu bytes\n",
+         sizeof(kpoint *), sizeof(kpoint) * len);
+
+  printf("sizeof kdnode is %lu bytes, sizeof tree is %lu bytes\n",
+         sizeof(struct kdnode), sizeof(struct kdnode) * len);
+
   kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
   get_dataset_ptrs(dataset, dataset_ptrs, len);
 
   double tstart = CPU_TIME;
-  pqsort(dataset_ptrs, 0, len, cmpfunc_x_axis);
+#pragma omp parallel
+  {
+#pragma omp single nowait
+    pqsort(dataset_ptrs, 0, len, cmpfunc_x_axis);
+  }
   double telapsed = CPU_TIME - tstart;
 
   printf("elapsed time parallel qsort: %f\n", telapsed);
@@ -95,11 +108,11 @@ kpoint *generate_dataset(int len) {
   return dataset;
 }
 
-int cmp_double(const void *a, const void*b) {
+int cmp_double(const void *a, const void *b) {
   double *A = (double *)a;
   double *B = (double *)b;
 
-  return (*A >= *B); 
+  return (*A >= *B);
 }
 
 #define SWAP(A, B, SIZE)                                                       \
@@ -118,7 +131,7 @@ void insertion_sort(kpoint **data, int start, int end,
                     int (*comparator)(const void *, const void *)) {
   {
     int min_idx = start;
-    for (int i = start + 1; i < end; i++){
+    for (int i = start + 1; i < end; i++) {
       if (comparator(&data[min_idx], &data[i])) {
         min_idx = i;
       }
@@ -137,14 +150,14 @@ void insertion_sort(kpoint **data, int start, int end,
 int cmpfunc_x_axis(const void *a, const void *b) {
   kpoint **ptr_a = (kpoint **)a;
   kpoint **ptr_b = (kpoint **)b;
-  
+
   return ((*ptr_a)->coords[x_axis] >= (*ptr_b)->coords[x_axis]);
 }
 
 int cmpfunc_y_axis(const void *a, const void *b) {
   kpoint **ptr_a = (kpoint **)a;
   kpoint **ptr_b = (kpoint **)b;
- 
+
   return ((*ptr_a)->coords[y_axis] >= (*ptr_b)->coords[y_axis]);
 }
 
@@ -171,16 +184,22 @@ inline int compare_ge_y_axis(const void *A, const void *B) {
 void print_array(kpoint **arr, int len) {
   for (int i = 0; i < len; i++) {
     printf("element[%d]: (%f,%f)\n", i, arr[i]->coords[0], arr[i]->coords[1]);
-  } 
+  }
 }
 
-kpoint **median_of_three(kpoint **a, kpoint **b, kpoint **c, int (*comparator)(const void *, const void *)) {
-  if (comparator(b,a) && comparator(c,b)) return b;  // a b c
-  if (comparator(c,a) && comparator(b,c)) return c;  // a c b
-  if (comparator(a,b) && comparator(c,a)) return a;  // b a c
-  if (comparator(c,b) && comparator(a,c)) return c;  // b c a
-  if (comparator(a,c) && comparator(b,a)) return a;  // c a b
-  return b;                                          // c b a
+kpoint **median_of_three(kpoint **a, kpoint **b, kpoint **c,
+                         int (*comparator)(const void *, const void *)) {
+  if (comparator(b, a) && comparator(c, b))
+    return b; // a b c
+  if (comparator(c, a) && comparator(b, c))
+    return c; // a c b
+  if (comparator(a, b) && comparator(c, a))
+    return a; // b a c
+  if (comparator(c, b) && comparator(a, c))
+    return c; // b c a
+  if (comparator(a, c) && comparator(b, a))
+    return a; // c a b
+  return b;   // c b a
 }
 
 int partitioning(kpoint **data, int start, int end,
@@ -196,7 +215,8 @@ int partitioning(kpoint **data, int start, int end,
   void *pivot = &data[end];
   // int mid = ceil((end - start) / 2.0);
   // --end;
-  // void *pivot = median_of_three(&data[0], &data[mid], &data[end], comparator);
+  // void *pivot = median_of_three(&data[0], &data[mid], &data[end],
+  // comparator);
 
   int pointbreak = end - 1;
   for (int i = start; i <= pointbreak; i++)

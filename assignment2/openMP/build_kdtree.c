@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 
   struct timespec ts;
 
-  int len = 100000;
+  int len = 1000000;
   kpoint *dataset = generate_dataset(len);
 
   kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
@@ -103,7 +103,7 @@ kpoint *generate_dataset(int len) {
 
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int ndim,
                             int axis, int nthreads) {
-  printf("len: %d\n", len);
+  printf("input len: %d\n", len);
   if (len == 1) {
     struct kdnode *leaf = malloc(sizeof(struct kdnode));
     leaf->axis = axis;
@@ -111,18 +111,10 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int ndim,
     leaf->left = NULL;
     leaf->right = NULL;
 
-    printf("chosen axis: %d\n", axis);
-    printf("chosen splitting point: (%f,%f)\n\n", dataset_ptrs[0]->coords[0],
-           dataset_ptrs[0]->coords[1]);
     return leaf;
   } else if (len == 0) {
-    printf("\n");
     return NULL;
   }
-
-  printf("input dataset: \n");
-  print_dataset_ptr(dataset_ptrs, len);
-  printf("\n");
 
   struct kdnode *node = malloc(sizeof(struct kdnode));
 
@@ -134,15 +126,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int ndim,
     pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
   }
 
-  printf("sorted dataset\n");
-  print_dataset_ptr(dataset_ptrs, len);
-  printf("\n");
-
   kpoint *split_point = choose_splitting_point(dataset_ptrs, len, chosen_axis);
-
-  printf("chosen axis: %d\n", chosen_axis);
-  printf("chosen splitting point: (%f,%f)\n", (*split_point).coords[0],
-         (*split_point).coords[1]);
 
   kpoint **left_points, **right_points;
 
@@ -150,11 +134,10 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int ndim,
   int len_left = median - 1;    // length of the left points
   int len_right = len - median; // length of the right points
 
-  printf("median: %d, len_left: %d, len_right: %d\n\n", median, len_left,
-         len_right);
-
   left_points = &dataset_ptrs[0];       // starting pointer of left_points
   right_points = &dataset_ptrs[median]; // starting pointer of right_points
+
+  printf("len_left = %d, len_right = %d\n", len_left, len_right);
 
   node->axis = chosen_axis;
   node->split = *split_point;
@@ -280,9 +263,11 @@ kpoint **median_of_three(kpoint **a, kpoint **b, kpoint **c, int (*comparator)(c
 int partitioning(kpoint **data, int start, int end,
                  int (*comparator)(const void *, const void *)) {
   // pick up the meadian of [0], [mid] and [end] as pivot
-  int mid = ceil((end - start) / 2.0);
+  // int mid = ceil((end - start) / 2.0);
+  // --end;
+  // void *pivot = median_of_three(&data[0], &data[mid], &data[end], comparator); 
   --end;
-  void *pivot = median_of_three(&data[0], &data[mid], &data[end], comparator);
+  void *pivot = &data[end];
 
   int pointbreak = end - 1;
   for (int i = start; i <= pointbreak; i++)

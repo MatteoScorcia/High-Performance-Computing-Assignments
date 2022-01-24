@@ -27,6 +27,15 @@
    (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9)
 #endif
 
+void print_task(int i) {
+#pragma omp task
+      printf("i am thread %d picking the task number %d! \n",
+             omp_get_thread_num(), i);
+#pragma omp task
+      printf("i am thread %d picking the task number %d! \n",
+             omp_get_thread_num(), i * 10);
+}
+
 int main(int argc, char *argv[]) {
   int sum = 0;
   int N = 800000;
@@ -49,31 +58,39 @@ int main(int argc, char *argv[]) {
   double res1 = 0, res2 = 0, res3 = 0;
 
 #pragma omp task shared(array, N, res1) untied
-{
-  int local_result = 0;
-  for (int i = 0; i < N; i++) {
-    local_result += i;
+  {
+    int local_result = 0;
+    for (int i = 0; i < N; i++) {
+      local_result += i;
+    }
+#pragma omp atomic
+    res1 += local_result;
   }
-  #pragma omp atomic
-  res1 += local_result;
-}
 
 #pragma omp task shared(array, N, res2) untied
-{
-  int local_result = 0;
-  for (int i = 0; i < N; i++) {
-    local_result -= i;
+  {
+    int local_result = 0;
+    for (int i = 0; i < N; i++) {
+      local_result -= i;
+    }
+#pragma omp atomic
+    res2 += local_result;
   }
-  #pragma omp atomic
-  res2 += local_result;
-}
 
 #pragma omp taskwait
-printf("res1: %f\n", res1);
-printf("res2: %f\n", res2);
-printf("tasks have finished the work!!\n");
+  printf("res1: %f\n", res1);
+  printf("res2: %f\n", res2);
+  printf("tasks have finished the work!!\n");
 
   double finish_time = CPU_TIME;
   printf("elapsed time: %f\n", finish_time - start_time);
+
+#pragma omp parallel
+  {
+    #pragma omp single
+    for (int i = 0; i < 12; i++) {
+    print_task(i);
+    }
+  }
   return 0;
 }
