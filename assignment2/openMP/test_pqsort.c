@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 
   struct timespec ts;
 
-  int len = 10000000;
+  int len = 1000000;
   kpoint *dataset = generate_dataset(len);
   
   kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
@@ -71,10 +71,12 @@ int main(int argc, char *argv[]) {
 
   printf("elapsed time parallel qsort: %f\n", telapsed);
 
-  dataset = generate_dataset(len);
-  get_dataset_ptrs(dataset, dataset_ptrs, len);
+  kpoint *dataset2 = generate_dataset(len);
+  kpoint **dataset_ptrs2 = malloc(len * sizeof(kpoint *));
+
+  get_dataset_ptrs(dataset2, dataset_ptrs2, len);
   tstart = CPU_TIME;
-  qsort(dataset_ptrs, len, sizeof(kpoint *), cmpfunc_x_axis);
+  qsort(dataset_ptrs2, len, sizeof(kpoint *), cmpfunc_x_axis);
   telapsed = CPU_TIME - tstart;
 
   printf("elapsed time serial qsort: %f\n", telapsed);
@@ -172,6 +174,15 @@ void print_array(kpoint **arr, int len) {
   } 
 }
 
+kpoint **median_of_three(kpoint **a, kpoint **b, kpoint **c, int (*comparator)(const void *, const void *)) {
+  if (comparator(b,a) && comparator(c,b)) return b;  // a b c
+  if (comparator(c,a) && comparator(b,c)) return c;  // a c b
+  if (comparator(a,b) && comparator(c,a)) return a;  // b a c
+  if (comparator(c,b) && comparator(a,c)) return c;  // b c a
+  if (comparator(a,c) && comparator(b,a)) return a;  // c a b
+  return b;                                          // c b a
+}
+
 int partitioning(kpoint **data, int start, int end,
                  int (*comparator)(const void *, const void *)) {
 
@@ -183,6 +194,9 @@ int partitioning(kpoint **data, int start, int end,
   //
   --end;
   void *pivot = &data[end];
+  // int mid = ceil((end - start) / 2.0);
+  // --end;
+  // void *pivot = median_of_three(&data[0], &data[mid], &data[end], comparator);
 
   int pointbreak = end - 1;
   for (int i = start; i <= pointbreak; i++)
