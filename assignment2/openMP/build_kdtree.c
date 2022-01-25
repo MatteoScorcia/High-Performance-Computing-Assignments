@@ -49,7 +49,7 @@ void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len);
 void copy_dataset_ptrs(kpoint **dataset_ptrs, kpoint **new_arr, int len);
 
 // kd-tree build functions
-struct kdnode *build_kdtree(kpoint **dataset_ptr, int len, int ndim, int axis, int nthreads);
+struct kdnode *build_kdtree(kpoint **dataset_ptr, int len, int axis, int level);
 int choose_splitting_dimension(kpoint **dataset_ptrs, int len);
 kpoint *choose_splitting_point(kpoint **dataset_ptrs, int len, int chosen_axis);
 float_t get_dataset_extent(kpoint **arr, int len, int axis);
@@ -63,11 +63,16 @@ int main(int argc, char *argv[]) {
 
   int len = 1000000;
   kpoint *dataset = generate_dataset(len);
+  
+  // kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
+  //                      {8, 1}, {7, 2}, {8, 9}, {1, 1}};
+  // int len = sizeof(dataset) / sizeof(dataset[0]);
 
   kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
   get_dataset_ptrs(dataset, dataset_ptrs, len);
-  
+
   int nthreads;
+  struct kdnode *root;
 
   #pragma omp parallel
   {
@@ -81,16 +86,22 @@ int main(int argc, char *argv[]) {
   get_dataset_ptrs(dataset, dataset_ptrs, len);
   
   double tstart = CPU_TIME;
-  #pragma omp parallel shared(dataset_ptrs) firstprivate(len, nthreads) 
+  #pragma omp parallel shared(dataset_ptrs, root) firstprivate(len, nthreads) 
   {
-    #pragma omp single
+    #pragma omp single nowait
     {
-      build_kdtree(dataset_ptrs, len, 2, 0, nthreads);
+      root = build_kdtree(dataset_ptrs, len, 0, 0);
     }
   }
   double telapsed = CPU_TIME - tstart;
 
   printf("elapsed time: %f\n", telapsed);
+  printf("root node: split->(%f,%f)\n", root->split.coords[0], root->split.coords[1] );
+  printf("left node: split->(%f,%f)\n", root->left->split.coords[0], root->left->split.coords[1] );
+  printf("right node: split->(%f,%f)\n", root->right->split.coords[0], root->right->split.coords[1] );
+
+  free(dataset);
+  free(dataset_ptrs);
   return 0;
 }
 
@@ -107,8 +118,8 @@ kpoint *generate_dataset(int len) {
 
 #define build_cutoff 16 
 
-struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int ndim,
-                            int axis, int nthreads) {
+struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int axis, int level) {
+  printf("level: %d, thread: %d\n", level, omp_get_thread_num());
   if (len == 1) {
     struct kdnode *leaf = malloc(sizeof(struct kdnode));
     leaf->axis = axis;
@@ -125,17 +136,20 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int ndim,
 
   int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
 
-  // if (chosen_axis == x_axis) {
-  //   qsort(dataset_ptrs, len, sizeof(kpoint *), compare_ge_x_axis);
-  // } else {
-  //   qsort(dataset_ptrs, len, sizeof(kpoint *), compare_ge_y_axis);
-  // }
-
   if (chosen_axis == x_axis) {
-    pqsort(dataset_ptrs, 0, len, compare_ge_x_axis);
+    qsort(dataset_ptrs, len, sizeof(kpoint *), compare_ge_x_axis);
   } else {
-    pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
+    qsort(dataset_ptrs, len, sizeof(kpoint *), compare_ge_y_axis);
   }
+  
+  // #pragma omp taskgroup
+  // {
+  //   if (chosen_axis == x_axis) {
+  //     pqsort(dataset_ptrs, 0, len, compare_ge_x_axis);
+  //   } else {
+  //     pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
+  //   }
+  // }
 
   kpoint *split_point = choose_splitting_point(dataset_ptrs, len, chosen_axis);
 
@@ -144,16 +158,21 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int ndim,
   int median = ceil(len / 2.0);
   int len_left = median - 1;    // length of the left points
   int len_right = len - median; // length of the right points
-
-  left_points = &dataset_ptrs[0];       // starting pointer of left_points
-  right_points = &dataset_ptrs[median]; // starting pointer of right_points
-
+  
+  #pragma omp task shared(dataset_ptrs, left_points, right_points, median) depend(in:dataset_ptrs) depend(out:left_points) depend(out:right_points)
+  {
+    left_points = &dataset_ptrs[0];       // starting pointer of left_points
+    right_points = &dataset_ptrs[median]; // starting pointer of right_points
+  }
+  
   node->axis = chosen_axis;
   node->split = *split_point;
-  #pragma omp task shared(left_points) firstprivate(len_left, ndim, chosen_axis, nthreads) final(len_left < build_cutoff) mergeable untied
-    node->left = build_kdtree(left_points, len_left, ndim, chosen_axis, nthreads);
-  #pragma omp task shared(right_points) firstprivate(len_right, ndim, chosen_axis, nthreads) final(len_right < build_cutoff) mergeable untied
-    node->right = build_kdtree(right_points, len_right, ndim, chosen_axis, nthreads);
+  #pragma omp task shared(left_points) depend(in:left_points) firstprivate(len_left, chosen_axis, level) final(level > build_cutoff) mergeable untied
+    node->left = build_kdtree(left_points, len_left, chosen_axis, level+1);
+  #pragma omp task shared(right_points) depend(in:right_points) firstprivate(len_right, chosen_axis, level) final(level > build_cutoff) mergeable untied
+    node->right = build_kdtree(right_points, len_right, chosen_axis, level+1);
+
+  #pragma omp taskwait
   return node;
 }
 
@@ -245,21 +264,8 @@ inline int compare_ge_y_axis(const void *A, const void *B) {
   return ((*a)->coords[y_axis] >= (*b)->coords[y_axis]);
 }
 
-kpoint **median_of_three(kpoint **a, kpoint **b, kpoint **c, int (*comparator)(const void *, const void *)) {
-  if (comparator(b,a) && comparator(c,b)) return b;  // a b c
-  if (comparator(c,a) && comparator(b,c)) return c;  // a c b
-  if (comparator(a,b) && comparator(c,a)) return a;  // b a c
-  if (comparator(c,b) && comparator(a,c)) return c;  // b c a
-  if (comparator(a,c) && comparator(b,a)) return a;  // c a b
-  return b;                                          // c b a
-}
-
 int partitioning(kpoint **data, int start, int end,
                  int (*comparator)(const void *, const void *)) {
-  // pick up the meadian of [0], [mid] and [end] as pivot
-  // int mid = ceil((end - start) / 2.0);
-  // --end;
-  // void *pivot = median_of_three(&data[0], &data[mid], &data[end], comparator); 
   --end;
   void *pivot = &data[end];
 
@@ -295,7 +301,7 @@ void insertion_sort(kpoint **data, int start, int end,
     }
   }
 }
-#define task_cutoff 16
+#define task_cutoff 64
 #define insertion_cutoff task_cutoff / 2
 
 void pqsort(kpoint **data, int start, int end,

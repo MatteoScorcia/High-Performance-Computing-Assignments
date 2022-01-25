@@ -65,16 +65,13 @@ int main(int argc, char *argv[]) {
   int len = 1000000;
   kpoint *dataset = generate_dataset(len);
 
-  printf("sizeof kpoint * is %lu bytes, sizeof dataset is %lu bytes\n",
-         sizeof(kpoint *), sizeof(kpoint) * len);
-
   kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
   get_dataset_ptrs(dataset, dataset_ptrs, len);
 
   double tstart = CPU_TIME;
 #pragma omp parallel
   {
-#pragma omp single nowait
+#pragma omp single
     pqsort(dataset_ptrs, 0, len, cmpfunc_x_axis);
   }
   double telapsed = CPU_TIME - tstart;

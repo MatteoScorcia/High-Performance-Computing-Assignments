@@ -56,7 +56,7 @@ void print_dataset_ptr(kpoint **dataset_ptr, int len);
 int main(int argc, char *argv[]) {
 
   struct  timespec ts;
-  int len = 1000000;
+  int len = 10;
   kpoint *dataset = generate_dataset(len);
 
   kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
