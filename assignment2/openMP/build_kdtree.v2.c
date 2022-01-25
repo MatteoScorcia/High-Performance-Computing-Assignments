@@ -61,23 +61,15 @@ int main(int argc, char *argv[]) {
 
   struct timespec ts;
 
-  // int len = 80000000;
-  // kpoint *dataset = generate_dataset(len);
+  int len = 800000;
+  kpoint *dataset = generate_dataset(len);
   
-  kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
-                       {8, 1}, {7, 2}, {8, 9}, {1, 1}};
-  int len = sizeof(dataset) / sizeof(dataset[0]);
+  // kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
+  //                      {8, 1}, {7, 2}, {8, 9}, {1, 1}};
+  // int len = sizeof(dataset) / sizeof(dataset[0]);
 
   kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
   get_dataset_ptrs(dataset, dataset_ptrs, len);
-
-  for (int i = 0; i < len; i++) {
-    printf("%p\n", dataset_ptrs[i]);
-  }
-
-  for (int i = 0; i < len; i++) {
-    printf("%p\n", &dataset_ptrs[i]);
-  }
 
   int nthreads;
   struct kdnode *root;
@@ -152,6 +144,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int axis, int level)
       pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
     }
   }
+
   // if (chosen_axis == x_axis) {
   //   qsort(dataset_ptrs, len, sizeof(kpoint *), compare_ge_x_axis);
   // } else {
@@ -174,9 +167,9 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int axis, int level)
   
   node->axis = chosen_axis;
   node->split = *split_point;
-  #pragma omp task shared(left_points) depend(in:left_points) firstprivate(len_left, chosen_axis, level) final(level > build_cutoff) mergeable untied
+  #pragma omp task shared(left_points) depend(in:left_points) firstprivate(len_left, chosen_axis, level) if(level <= build_cutoff) mergeable untied
     node->left = build_kdtree(left_points, len_left, chosen_axis, level+1);
-  #pragma omp task shared(right_points) depend(in:right_points) firstprivate(len_right, chosen_axis, level) final(level > build_cutoff) mergeable untied
+  #pragma omp task shared(right_points) depend(in:right_points) firstprivate(len_right, chosen_axis, level) if(level <= build_cutoff) mergeable untied
     node->right = build_kdtree(right_points, len_right, chosen_axis, level+1);
 
   #pragma omp taskwait
