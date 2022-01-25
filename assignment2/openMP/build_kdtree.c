@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 
   struct timespec ts;
 
-  int len = 1000000;
+  int len = 80000000;
   kpoint *dataset = generate_dataset(len);
   
   // kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
@@ -106,12 +106,12 @@ int main(int argc, char *argv[]) {
 }
 
 kpoint *generate_dataset(int len) {
-  srand48(time(NULL));
+  srand((unsigned int)time(NULL));
 
   kpoint *dataset = malloc(len * sizeof(kpoint));
   for (int i = 0; i < len; i++) {
-    dataset[i].coords[0] = drand48();
-    dataset[i].coords[1] = drand48();
+    dataset[i].coords[0] = (float_t)drand48();
+    dataset[i].coords[1] = (float_t)drand48();
   }
   return dataset;
 }
@@ -119,7 +119,7 @@ kpoint *generate_dataset(int len) {
 #define build_cutoff 16 
 
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int axis, int level) {
-  printf("level: %d, thread: %d\n", level, omp_get_thread_num());
+  // printf("level: %d, thread: %d\n", level, omp_get_thread_num());
   if (len == 1) {
     struct kdnode *leaf = malloc(sizeof(struct kdnode));
     leaf->axis = axis;
@@ -136,20 +136,17 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int axis, int level)
 
   int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
 
+  // if (chosen_axis == x_axis) {
+  //   pqsort(dataset_ptrs, 0, len, compare_ge_x_axis);
+  // } else {
+  //   pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
+  // }
+
   if (chosen_axis == x_axis) {
     qsort(dataset_ptrs, len, sizeof(kpoint *), compare_ge_x_axis);
   } else {
     qsort(dataset_ptrs, len, sizeof(kpoint *), compare_ge_y_axis);
   }
-  
-  // #pragma omp taskgroup
-  // {
-  //   if (chosen_axis == x_axis) {
-  //     pqsort(dataset_ptrs, 0, len, compare_ge_x_axis);
-  //   } else {
-  //     pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
-  //   }
-  // }
 
   kpoint *split_point = choose_splitting_point(dataset_ptrs, len, chosen_axis);
 
