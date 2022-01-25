@@ -144,12 +144,14 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int axis, int level)
 
   int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
 
-  if (chosen_axis == x_axis) {
-    pqsort(dataset_ptrs, 0, len, compare_ge_x_axis);
-  } else {
-    pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
+  #pragma omp taskgroup
+  {
+    if (chosen_axis == x_axis) {
+      pqsort(dataset_ptrs, 0, len, compare_ge_x_axis);
+    } else {
+      pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
+    }
   }
-
   // if (chosen_axis == x_axis) {
   //   qsort(dataset_ptrs, len, sizeof(kpoint *), compare_ge_x_axis);
   // } else {
