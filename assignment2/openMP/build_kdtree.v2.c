@@ -61,12 +61,14 @@ int main(int argc, char *argv[]) {
 
   struct timespec ts;
 
-  int len = 800000;
+  int len = 80000;
   kpoint *dataset = generate_dataset(len);
   
   // kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
   //                      {8, 1}, {7, 2}, {8, 9}, {1, 1}};
   // int len = sizeof(dataset) / sizeof(dataset[0]);
+  
+  printf("len: %d\n", len);
 
   kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
   get_dataset_ptrs(dataset, dataset_ptrs, len);
@@ -100,7 +102,7 @@ int main(int argc, char *argv[]) {
   printf("left node: split->(%f,%f)\n", root->left->split.coords[0], root->left->split.coords[1] );
   printf("right node: split->(%f,%f)\n", root->right->split.coords[0], root->right->split.coords[1] );
 
-  // free(dataset);
+  free(dataset);
   free(dataset_ptrs);
   return 0;
 }
@@ -116,7 +118,7 @@ kpoint *generate_dataset(int len) {
   return dataset;
 }
 
-#define build_cutoff 16 
+#define build_cutoff 128
 
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int axis, int level) {
   // printf("level: %d, thread: %d\n", level, omp_get_thread_num());
@@ -159,17 +161,14 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int axis, int level)
   int len_left = median - 1;    // length of the left points
   int len_right = len - median; // length of the right points
   
-  #pragma omp task shared(dataset_ptrs, left_points, right_points, median) depend(in:dataset_ptrs) depend(out:left_points) depend(out:right_points)
-  {
-    left_points = &dataset_ptrs[0];       // starting pointer of left_points
-    right_points = &dataset_ptrs[median]; // starting pointer of right_points
-  }
+  left_points = &dataset_ptrs[0];       // starting pointer of left_points
+  right_points = &dataset_ptrs[median]; // starting pointer of right_points
   
   node->axis = chosen_axis;
   node->split = *split_point;
-  #pragma omp task shared(left_points) depend(in:left_points) firstprivate(len_left, chosen_axis, level) if(level <= build_cutoff) mergeable untied
+  #pragma omp task shared(left_points) firstprivate(len_left, chosen_axis, level) if(len_left >= build_cutoff) mergeable untied
     node->left = build_kdtree(left_points, len_left, chosen_axis, level+1);
-  #pragma omp task shared(right_points) depend(in:right_points) firstprivate(len_right, chosen_axis, level) if(level <= build_cutoff) mergeable untied
+  #pragma omp task shared(right_points) firstprivate(len_right, chosen_axis, level) if(len_right >= build_cutoff) mergeable untied
     node->right = build_kdtree(right_points, len_right, chosen_axis, level+1);
 
   #pragma omp taskwait
