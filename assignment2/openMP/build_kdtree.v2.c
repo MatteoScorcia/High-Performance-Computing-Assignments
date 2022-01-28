@@ -102,6 +102,8 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  printf("pre-sorting done!\n");
+
   double tstart = CPU_TIME;
   #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len) 
   {
