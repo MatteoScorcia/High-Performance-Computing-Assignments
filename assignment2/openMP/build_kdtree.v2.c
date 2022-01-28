@@ -91,8 +91,7 @@ int main(int argc, char *argv[]) {
   //
   printf("choosing splitting dimension..\n");
   int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
-  #pragma omp barrier
-  printf("splitting dimension has been chosen!\n");
+  printf("splitting dimension has been chosen: %d\n", chosen_axis);
 
   printf("starting pre-sorting..\n");
   #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len)
