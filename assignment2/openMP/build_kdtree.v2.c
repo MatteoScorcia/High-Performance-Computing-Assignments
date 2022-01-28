@@ -151,8 +151,8 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int current_axis, in
 
   int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
 
-  if(level == 3) {
-    printf("reached level 3\n");
+  if((level >= 0) && (level <= 3)) {
+    printf("reached level %d\n", level);
   }
 
   #pragma omp taskgroup
