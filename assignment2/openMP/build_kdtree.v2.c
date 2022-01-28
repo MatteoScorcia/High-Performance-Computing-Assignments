@@ -367,7 +367,7 @@ shared(data) firstprivate(start, mid, comparator, comparator_insort) untied
       int end_mid = end - (mid + 1);
       if (end_mid)
 #pragma omp task default(none) final(end_mid < task_cutoff) mergeable shared(  \
-    data) firstprivate(mid, end, comparatr, comparator_insort) untied
+    data) firstprivate(mid, end, comparator, comparator_insort) untied
         pqsort(data, mid + 1, end, comparator, comparator_insort);
     }
   } break;
