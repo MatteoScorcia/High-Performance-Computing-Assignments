@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
   }
 
   double tstart = CPU_TIME;
-  #pragma omp parallel shared(dataset_ptrs, root) firstprivate(len, nthreads) 
+  #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len) 
   {
     #pragma omp single nowait
     {
@@ -150,6 +150,10 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int current_axis, in
   struct kdnode *node = malloc(sizeof(struct kdnode));
 
   int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
+
+  if(level == 3) {
+    printf("reached level 3\n");
+  }
 
   #pragma omp taskgroup
   {
