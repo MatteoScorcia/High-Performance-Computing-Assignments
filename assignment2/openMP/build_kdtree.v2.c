@@ -40,9 +40,11 @@ struct kdnode {
 
 // utility functions
 void pqsort(kpoint **data, int start, int end,
-            int (*comparator)(const void *, const void *));
+            int (*comparator)(const void *, const void *), int(*comparator_insort)(const void *, const void *));
 int compare_ge_x_axis(const void *a, const void *b);
 int compare_ge_y_axis(const void *a, const void *b);
+int compare_g_x_axis(const void *a, const void *b);
+int compare_g_y_axis(const void *a, const void *b);
 
 kpoint *generate_dataset(int len);
 void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len);
@@ -89,7 +91,7 @@ int main(int argc, char *argv[]) {
   //
   printf("choosing splitting dimension..\n");
   int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
-  printf("splitting dimension has benn chosen!\n");
+  printf("splitting dimension has been chosen!\n");
 
   printf("starting pre-sorting..\n");
   #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len)
@@ -97,13 +99,12 @@ int main(int argc, char *argv[]) {
     #pragma omp single nowait
     {
       if(chosen_axis == x_axis) {
-        pqsort(dataset_ptrs, 0, len, compare_ge_x_axis);
+        pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
       } else {
-        pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
+        pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_ge_y_axis);
       }
     }
   }
-
   printf("pre-sorting done!\n");
 
   double tstart = CPU_TIME;
@@ -163,9 +164,9 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int current_axis, in
   {
     if (chosen_axis != current_axis) {
       if(chosen_axis == x_axis) {
-        pqsort(dataset_ptrs, 0, len, compare_ge_x_axis);
+        pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
       } else {
-        pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
+        pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_g_y_axis);
       }
     }   
   }
@@ -280,6 +281,20 @@ inline int compare_ge_y_axis(const void *A, const void *B) {
   return ((*a)->coords[y_axis] >= (*b)->coords[y_axis]);
 }
 
+inline int compare_g_x_axis(const void *A, const void *B) {
+  kpoint **a = (kpoint **)A;
+  kpoint **b = (kpoint **)B;
+
+  return ((*a)->coords[x_axis] > (*b)->coords[x_axis]);
+}
+
+inline int compare_g_y_axis(const void *A, const void *B) {
+  kpoint **a = (kpoint **)A;
+  kpoint **b = (kpoint **)B;
+
+  return ((*a)->coords[y_axis] > (*b)->coords[y_axis]);
+}
+
 int partitioning(kpoint **data, int start, int end,
                  int (*comparator)(const void *, const void *)) {
   --end;
@@ -321,7 +336,7 @@ void insertion_sort(kpoint **data, int start, int end,
 #define insertion_cutoff task_cutoff / 2
 
 void pqsort(kpoint **data, int start, int end,
-            int (*comparator)(const void *, const void *)) {
+            int (*comparator)(const void *, const void *), int(*comparator_insort)(const void *, const void *)) {
   int size = end - start;
 
   switch (size) {
@@ -338,7 +353,7 @@ void pqsort(kpoint **data, int start, int end,
   } break;
   default: {
     if (size < insertion_cutoff) {
-      insertion_sort(data, start, end, comparator);
+      insertion_sort(data, start, end, comparator_insort);
     } else {
 
       int mid = partitioning(data, start, end, comparator);
