@@ -85,8 +85,6 @@ int main(int argc, char *argv[]) {
     }
   }
   
-  get_dataset_ptrs(dataset, dataset_ptrs, len);
-
   //pre-sort by chosen axis
   int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
 
