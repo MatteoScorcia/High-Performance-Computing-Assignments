@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 
   struct timespec ts;
 
-  int len = 80000;
+  int len = 80000000;
   kpoint *dataset = generate_dataset(len);
   
   // kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
@@ -86,21 +86,34 @@ int main(int argc, char *argv[]) {
   }
   
   get_dataset_ptrs(dataset, dataset_ptrs, len);
-  
+
+  //pre-sort by chosen axis
+  int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
+
+  #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len)
+  {
+    #pragma omp single nowait
+    {
+      if(chosen_axis == x_axis) {
+        pqsort(dataset_ptrs, 0, len, compare_ge_x_axis);
+      } else {
+        pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
+      }
+    }
+  }
+
   double tstart = CPU_TIME;
   #pragma omp parallel shared(dataset_ptrs, root) firstprivate(len, nthreads) 
   {
     #pragma omp single nowait
     {
-      root = build_kdtree(dataset_ptrs, len, 0, 0);
+      int level = 0;
+      root = build_kdtree(dataset_ptrs, len, chosen_axis, level);
     }
   }
   double telapsed = CPU_TIME - tstart;
 
   printf("elapsed time: %f\n", telapsed);
-  printf("root node: split->(%f,%f)\n", root->split.coords[0], root->split.coords[1] );
-  printf("left node: split->(%f,%f)\n", root->left->split.coords[0], root->left->split.coords[1] );
-  printf("right node: split->(%f,%f)\n", root->right->split.coords[0], root->right->split.coords[1] );
 
   free(dataset);
   free(dataset_ptrs);
@@ -120,11 +133,11 @@ kpoint *generate_dataset(int len) {
 
 #define build_cutoff 128
 
-struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int axis, int level) {
+struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int current_axis, int level) {
   // printf("level: %d, thread: %d\n", level, omp_get_thread_num());
   if (len == 1) {
     struct kdnode *leaf = malloc(sizeof(struct kdnode));
-    leaf->axis = axis;
+    leaf->axis = current_axis;
     leaf->split = *dataset_ptrs[0];
     leaf->left = NULL;
     leaf->right = NULL;
@@ -140,29 +153,25 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, int len, int axis, int level)
 
   #pragma omp taskgroup
   {
-    if (chosen_axis == x_axis) {
-      pqsort(dataset_ptrs, 0, len, compare_ge_x_axis);
-    } else {
-      pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
-    }
+    if (chosen_axis != current_axis) {
+      if(chosen_axis == x_axis) {
+        pqsort(dataset_ptrs, 0, len, compare_ge_x_axis);
+      } else {
+        pqsort(dataset_ptrs, 0, len, compare_ge_y_axis);
+      }
+    }   
   }
-
-  // if (chosen_axis == x_axis) {
-  //   qsort(dataset_ptrs, len, sizeof(kpoint *), compare_ge_x_axis);
-  // } else {
-  //   qsort(dataset_ptrs, len, sizeof(kpoint *), compare_ge_y_axis);
-  // }
 
   kpoint *split_point = choose_splitting_point(dataset_ptrs, len, chosen_axis);
 
   kpoint **left_points, **right_points;
 
-  int median = ceil(len / 2.0);
-  int len_left = median - 1;    // length of the left points
-  int len_right = len - median; // length of the right points
+  int median_idx = ceil(len / 2.0);
+  int len_left = median_idx - 1;    // length of the left points
+  int len_right = len - median_idx; // length of the right points
   
   left_points = &dataset_ptrs[0];       // starting pointer of left_points
-  right_points = &dataset_ptrs[median]; // starting pointer of right_points
+  right_points = &dataset_ptrs[median_idx]; // starting pointer of right_points
   
   node->axis = chosen_axis;
   node->split = *split_point;
@@ -199,7 +208,7 @@ float_t get_dataset_extent(kpoint **dataset, int len, int axis) {
 }
 
 float_t get_max_value_dataset(kpoint **dataset, int len, int axis) {
-  float_t max_value = (*dataset[0]).coords[axis];
+  float_t max_value = dataset[0]->coords[axis];
   #pragma omp parallel for reduction(max:max_value) schedule(static) proc_bind(close)
   for (int i = 1; i < len; i++) {
     max_value = max_value > dataset[i]->coords[axis] ? max_value : dataset[i]->coords[axis];
@@ -209,7 +218,7 @@ float_t get_max_value_dataset(kpoint **dataset, int len, int axis) {
 }
 
 float_t get_min_value_dataset(kpoint **dataset, int len, int axis) {
-  float_t min_value = (*dataset[0]).coords[axis];
+  float_t min_value = dataset[0]->coords[axis];
   #pragma omp parallel for reduction(min:min_value) schedule(static) proc_bind(close)
   for (int i = 1; i < len; i++) {
     min_value = min_value < dataset[i]->coords[axis] ? min_value : dataset[i]->coords[axis];
