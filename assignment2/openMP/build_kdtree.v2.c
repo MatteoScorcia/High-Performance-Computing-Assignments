@@ -84,10 +84,14 @@ int main(int argc, char *argv[]) {
       printf("num threads: %d\n", nthreads);
     }
   }
-  
-  //pre-sort by chosen axis
-  int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
 
+  //pre-sort by chosen axis
+  //
+  printf("choosing splitting dimension..\n");
+  int chosen_axis = choose_splitting_dimension(dataset_ptrs, len);
+  printf("splitting dimension has benn chosen!\n");
+
+  printf("starting pre-sorting..\n");
   #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len)
   {
     #pragma omp single nowait
