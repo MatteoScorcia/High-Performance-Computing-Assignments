@@ -361,13 +361,13 @@ void pqsort(kpoint **data, int start, int end,
       int mid_start = mid - start;
       if (mid_start > 0)
 #pragma omp task default(none) final(mid_start < task_cutoff) mergeable        \
-shared(data) firstprivate(start, mid, comparator) untied
+shared(data) firstprivate(start, mid) untied
         pqsort(data, start, mid, comparator, comparator_insort);
 
       int end_mid = end - (mid + 1);
       if (end_mid)
 #pragma omp task default(none) final(end_mid < task_cutoff) mergeable shared(  \
-    data) firstprivate(mid, end, comparator) untied
+    data) firstprivate(mid, end) untied
         pqsort(data, mid + 1, end, comparator, comparator_insort);
     }
   } break;
