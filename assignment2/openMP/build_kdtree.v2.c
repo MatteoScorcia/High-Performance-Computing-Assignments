@@ -263,7 +263,7 @@ void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len) {
 #define CHECKSWAP(a, b, comparator)                                            \
   {                                                                            \
     if (comparator(&data[start + (a)], &data[start + (b)]))                    \
-      SWAP(&data[start + (a)], &data[start + (b)],                             \
+      SWAP((void *)&data[start + (a)], (void *)&data[start + (b)],                             \
            sizeof(&data[start + (a)]));                                        \
   }
 
@@ -302,14 +302,14 @@ int partitioning(kpoint **data, int start, int end,
 
   int pointbreak = end - 1;
   for (int i = start; i <= pointbreak; i++)
-    if (comparator(&data[i], pivot)) {
+    if (comparator((void *)&data[i], pivot)) {
       while ((pointbreak > i) && comparator(&data[pointbreak], pivot))
         pointbreak--;
       if (pointbreak > i)
-        SWAP(&data[i], &data[pointbreak--], sizeof(&data[i]));
+        SWAP((void *)&data[i], (void *)&data[pointbreak--], sizeof(&data[i]));
     }
   pointbreak += !comparator(&data[pointbreak], pivot);
-  SWAP(&data[pointbreak], pivot, sizeof(&data[pointbreak]));
+  SWAP((void *)&data[pointbreak], pivot, sizeof(&data[pointbreak]));
 
   return pointbreak;
 }
@@ -322,12 +322,12 @@ void insertion_sort(kpoint **data, int start, int end,
       if (comparator(&data[min_idx], &data[i]))
         min_idx = i;
 
-    SWAP(&data[start], &data[min_idx], sizeof(&data[start]));
+    SWAP((void *)&data[start], (void *)&data[min_idx], sizeof(&data[start]));
   }
 
   for (int head = start + 1, run = start + 1; (run = ++head) < end;) {
     while ((run > 0) && comparator(&data[run - 1], &data[run])) {
-      SWAP(&data[run - 1], &data[run], sizeof(&data[run - 1]));
+      SWAP((void *)&data[run - 1], (void *)&data[run], sizeof(&data[run - 1]));
       --run;
     }
   }
@@ -344,7 +344,7 @@ void pqsort(kpoint **data, int start, int end,
     break;
   case 2: {
     if (comparator(&data[start], &data[end - 1]))
-      SWAP(&data[start], &data[end - 1], sizeof(&data[start]));
+      SWAP((void *)&data[start], (void *)&data[end - 1], sizeof(&data[start]));
   } break;
   case 3: {
     CHECKSWAP(1, 2, comparator);
