@@ -62,13 +62,17 @@ float_t get_min_value_dataset(kpoint **dataset, int len, int axis);
 int main(int argc, char *argv[]) {
 
   struct timespec ts;
+  int len;
 
-  int len = 80000000;
+  if (argc == 2 ) {
+    len = atoi(argv[1]);  
+  } else if (argc == 1){
+    len = 80000000;
+  } else {
+    return 1;
+  }
+
   kpoint *dataset = generate_dataset(len);
-  
-  // kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
-  //                      {8, 1}, {7, 2}, {8, 9}, {1, 1}};
-  // int len = sizeof(dataset) / sizeof(dataset[0]);
   
   printf("len: %d\n", len);
 
