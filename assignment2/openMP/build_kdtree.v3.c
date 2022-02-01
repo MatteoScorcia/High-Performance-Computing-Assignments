@@ -192,6 +192,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
   
   extremes[chosen_axis][0] = dataset_ptrs[0]->coords[chosen_axis]; //min value of chosen axis for left points
   extremes[chosen_axis][1] = dataset_ptrs[len_left]->coords[chosen_axis]; //max value of chosen axis for left points
+  printf("left points max: %f, min: %f\n", dataset_ptrs[0]->coords[chosen_axis], dataset_ptrs[len_left]->coords[chosen_axis]);
   #pragma omp task shared(left_points) firstprivate(extremes, len_left, chosen_axis, level) if(len_left >= build_cutoff) mergeable untied
     node->left = build_kdtree(left_points, extremes, len_left, chosen_axis, level+1);
 
