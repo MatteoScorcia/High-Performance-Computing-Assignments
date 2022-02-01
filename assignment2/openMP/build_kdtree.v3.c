@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
   if (argc == 2 ) {
     len = atoi(argv[1]);  
   } else if (argc == 1){
-    len = 80000000;
+    len = 100000000;
   } else {
     return 1;
   }
@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
     #pragma omp single nowait
     {
       int level = 0;
-      // root = build_kdtree(dataset_ptrs, len, chosen_axis, level);
+      root = build_kdtree(dataset_ptrs, extremes, len, chosen_axis, level);
     }
   }
   double telapsed = CPU_TIME - tstart;
