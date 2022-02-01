@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
  
   int chosen_axis = choose_splitting_dimension(extremes);
 
-  printf("starting x axis max: %f, starting min: %f\n", extremes[x_axis][1], extremes[x_axis][0]);
+  printf("starting y axis max: %f, starting min: %f\n", extremes[y_axis][1], extremes[y_axis][0]);
 
   printf("splitting dimension has been chosen: %d\n", chosen_axis);
 
