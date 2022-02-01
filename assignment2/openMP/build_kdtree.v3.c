@@ -88,7 +88,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  //pre-sort by chosen axis
   printf("choosing splitting dimension..\n");
   
   float_t extremes[NDIM][2]; //min_value (index 0) and max value (index 1) in each dimension NDIM
@@ -97,6 +96,8 @@ int main(int argc, char *argv[]) {
   get_dataset_extremes(dataset_ptrs, extremes, len, y_axis);
  
   int chosen_axis = choose_splitting_dimension(extremes);
+
+  printf("starting x axis max: %f, starting min: %f\n", extremes[x_axis][1], extremes[x_axis][0]);
 
   printf("splitting dimension has been chosen: %d\n", chosen_axis);
 
