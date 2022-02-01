@@ -163,6 +163,8 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
 
   int chosen_axis = choose_splitting_dimension(extremes);
 
+  printf("y axis max: %f, starting min: %f\n", extremes[y_axis][1], extremes[y_axis][0]);
+
   if((level >= 0) && (level <= 3)) {
     printf("reached level %d\n", level);
   }
