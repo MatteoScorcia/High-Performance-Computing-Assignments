@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
   printf("pre-sorting done!\n");
 
   double tstart = CPU_TIME;
-  #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len) 
+  #pragma omp parallel shared(dataset_ptrs) firstprivate(extremes, chosen_axis, len) 
   {
     #pragma omp single nowait
     {
@@ -192,12 +192,12 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
   
   extremes[chosen_axis][0] = dataset_ptrs[0]->coords[chosen_axis]; //min value of chosen axis for left points
   extremes[chosen_axis][1] = dataset_ptrs[len_left]->coords[chosen_axis]; //max value of chosen axis for left points
-  #pragma omp task shared(left_points) firstprivate(len_left, chosen_axis, level) if(len_left >= build_cutoff) mergeable untied
+  #pragma omp task shared(left_points) firstprivate(extremes, len_left, chosen_axis, level) if(len_left >= build_cutoff) mergeable untied
     node->left = build_kdtree(left_points, extremes, len_left, chosen_axis, level+1);
 
   extremes[chosen_axis][0] = dataset_ptrs[len_right]->coords[chosen_axis]; //min value of chosen axis for right points
   extremes[chosen_axis][1] = dataset_ptrs[len]->coords[chosen_axis]; //max value of chosen axis for right points
-  #pragma omp task shared(right_points) firstprivate(len_right, chosen_axis, level) if(len_right >= build_cutoff) mergeable untied
+  #pragma omp task shared(right_points) firstprivate(extremes, len_right, chosen_axis, level) if(len_right >= build_cutoff) mergeable untied
     node->right = build_kdtree(right_points, extremes, len_right, chosen_axis, level+1);
 
   #pragma omp taskwait
