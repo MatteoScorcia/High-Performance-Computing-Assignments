@@ -22,7 +22,7 @@ kpoint *generate_dataset(int len);
 int main(int argc, char *argv[])
 {
 	int numprocs;
-  int *provided;
+  int *provided = malloc(sizeof(int *));
 	MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, provided);
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 
