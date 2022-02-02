@@ -162,12 +162,12 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
 
   int chosen_axis = choose_splitting_dimension(extremes);
 
-  if((level >= 0) && (level <= 4)) {
+  if((level >= 0) && (level <= 3)) {
     printf("reached level %d, len is %d\n", level, len);
   }
 
-  printf("y axis max: %f, min: %f\n", extremes[y_axis][1], extremes[y_axis][0]);
-  printf("x axis max: %f, min: %f\n", extremes[x_axis][1], extremes[x_axis][0]);
+  // printf("y axis max: %f, min: %f\n", extremes[y_axis][1], extremes[y_axis][0]);
+  // printf("x axis max: %f, min: %f\n", extremes[x_axis][1], extremes[x_axis][0]);
 
   #pragma omp taskgroup
   {
@@ -199,7 +199,6 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
     extremes_left[chosen_axis][0] = dataset_ptrs[0]->coords[chosen_axis]; //min value of chosen axis for left points
     extremes_left[chosen_axis][1] = dataset_ptrs[len_left - 1]->coords[chosen_axis]; //max value of chosen axis for left points
 
-    printf("left points axis %d min: %f, max: %f\n", chosen_axis, dataset_ptrs[0]->coords[chosen_axis], dataset_ptrs[len_left - 1]->coords[chosen_axis]);
     #pragma omp task shared(left_points) firstprivate(extremes_left, len_left, chosen_axis, level) if(len_left >= build_cutoff) mergeable untied
       node->left = build_kdtree(left_points, extremes_left, len_left, chosen_axis, level+1);
   }
