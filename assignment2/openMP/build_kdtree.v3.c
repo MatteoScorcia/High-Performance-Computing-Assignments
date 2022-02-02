@@ -193,26 +193,20 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
   if (len_left != 0) {
     left_points = &dataset_ptrs[0];       // starting pointer of left_points
 
-    float_t extremes_left[NDIM][2];
-    copy_extremes(extremes, extremes_left);
-    
-    extremes_left[chosen_axis][0] = dataset_ptrs[0]->coords[chosen_axis]; //min value of chosen axis for left points
-    extremes_left[chosen_axis][1] = dataset_ptrs[len_left - 1]->coords[chosen_axis]; //max value of chosen axis for left points
+    extremes[chosen_axis][0] = dataset_ptrs[0]->coords[chosen_axis]; //min value of chosen axis for left points
+    extremes[chosen_axis][1] = dataset_ptrs[len_left - 1]->coords[chosen_axis]; //max value of chosen axis for left points
 
-    #pragma omp task shared(left_points) firstprivate(extremes_left, len_left, chosen_axis, level) if(len_left >= build_cutoff) mergeable untied
-      node->left = build_kdtree(left_points, extremes_left, len_left, chosen_axis, level+1);
+    #pragma omp task shared(left_points) firstprivate(extremes, len_left, chosen_axis, level) if(len_left >= build_cutoff) mergeable untied
+      node->left = build_kdtree(left_points, extremes, len_left, chosen_axis, level+1);
   }
 
   right_points = &dataset_ptrs[median_idx]; // starting pointer of right_points
   
-  float_t extremes_right[NDIM][2];
-  copy_extremes(extremes, extremes_right);
-  
-  extremes_right[chosen_axis][0] = dataset_ptrs[median_idx]->coords[chosen_axis]; //min value of chosen axis for right points
-  extremes_right[chosen_axis][1] = dataset_ptrs[len - 1]->coords[chosen_axis]; //max value of chosen axis for right points
+  extremes[chosen_axis][0] = dataset_ptrs[median_idx]->coords[chosen_axis]; //min value of chosen axis for right points
+  extremes[chosen_axis][1] = dataset_ptrs[len - 1]->coords[chosen_axis]; //max value of chosen axis for right points
 
-  #pragma omp task shared(right_points) firstprivate(extremes_right, len_right, chosen_axis, level) if(len_right >= build_cutoff) mergeable untied
-    node->right = build_kdtree(right_points, extremes_right, len_right, chosen_axis, level+1);
+  #pragma omp task shared(right_points) firstprivate(extremes, len_right, chosen_axis, level) if(len_right >= build_cutoff) mergeable untied
+    node->right = build_kdtree(right_points, extremes, len_right, chosen_axis, level+1);
   
   #pragma omp taskwait
   return node;

@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <time.h>
 #include <string.h>
+#include <omp.h>
 
 #if !defined(DOUBLE_PRECISION)
 #define float_t float
@@ -20,8 +21,8 @@ kpoint *generate_dataset(int len);
 
 int main(int argc, char *argv[])
 {
-	int numprocs;
-	MPI_Init(&argc, &argv);
+	int numprocs, provided;
+	MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, provided);
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 
 	int my_rank;
@@ -30,6 +31,14 @@ int main(int argc, char *argv[])
   kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
                        {8, 1}, {7, 2}, {8, 9}, {1, 1}};
   int len = sizeof(dataset) / sizeof(dataset[0]);
+
+  #pragma omp parallel 
+  {
+    #pragma omp master 
+    {
+      printf("i am master thread, there are %d threads\n", omp_get_num_threads());
+    }
+  }
 
   if (my_rank == 0) {
     MPI_Send(&dataset[2], 4, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
