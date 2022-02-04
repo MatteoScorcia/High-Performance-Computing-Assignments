@@ -251,13 +251,14 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
       printf("sending to mpi process %d, dataset chunk\n", counter);
       MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
 
-      kpoint *chunk = malloc(len * sizeof(kpoint));
+      // kpoint *chunk = malloc(len * sizeof(kpoint));
+      kpoint chunk[len];
       copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
       double a = chunk[0].coords[0];
       printf("first kpoint sent is (%f,%f)\n", chunk[0].coords[0], chunk[0].coords[1]);
-      MPI_Send(&a, 1, MPI_DOUBLE, counter, 0, MPI_COMM_WORLD);
+      MPI_Send(&chunk[0].coords[0], 1, MPI_DOUBLE, counter, 0, MPI_COMM_WORLD);
 
-      free(chunk);
+      // free(chunk);
       counter++;
     }
     return NULL;
