@@ -76,6 +76,8 @@ int main(int argc, char *argv[]) {
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
+  printf("rank %d init!\n", my_rank);
+
   if (my_rank == 0) {
     kpoint dataset[11] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
                          {8, 1}, {7, 2}, {8, 9}, {1, 1}, {0.55, 6}, {1.11111, 8.432}};
@@ -155,7 +157,7 @@ int main(int argc, char *argv[]) {
 
   int recv_len;
   MPI_Status status;
-  printf("i am pmpi process %d, receiving len..", my_rank);
+  printf("i am mpi process %d, receiving len..\n", my_rank);
   MPI_Recv(&recv_len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
   
   kpoint *recv_dataset = malloc(len * sizeof(kpoint));
