@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
   int recv_len;
   MPI_Status status;
   // MPI_Recv(&recv_len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-  // printf("i am processor %d, received len %d\n", my_rank, recv_len);
+  printf("i am processor %d, received len %d\n", my_rank, recv_len);
   double prova;
   MPI_Recv(&prova, 1, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
   printf("received %f\n", prova);
