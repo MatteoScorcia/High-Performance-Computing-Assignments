@@ -158,7 +158,10 @@ int main(int argc, char *argv[]) {
   kpoint *recv_dataset = malloc(len * sizeof(kpoint));
   MPI_Recv(recv_dataset, len * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
   
-  printf("i am processor %d, second point received: (%f,%f)\n", my_rank, recv_dataset[1].coords[0], recv_dataset[2].coords[1]);
+  float_t extremes[NDIM][2] = malloc(NDIM * 2 * sizeof(float_t));
+  MPI_Recv(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+  printf("received extremes[1][1] %f,%f\n", extremes[1][1].coords[0], extremes[1][1].coords[1]);
+  // kdnode *chunk_root = build_kdtree(chunk_ptrs, extremes, len, axis, level);
    
 	MPI_Finalize();
   return 0;
@@ -251,8 +254,10 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
 
       kpoint *chunk = malloc(len * sizeof(kpoint));
       copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
-      printf("first kpoint sent is (%f,%f)\n", chunk[0].coords[0], chunk[0].coords[1]);
       MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
+ 
+      MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
+      printf("extremes[1][1] %f,%f\n", extremes[1][1].coords[0], extremes[1][1].coords[1]);
 
       free(chunk);
       counter++;
