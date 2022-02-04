@@ -52,6 +52,7 @@ void copy_dataset_ptrs(kpoint **dataset_ptrs, kpoint **new_dataset, int len);
 
 // kd-tree build functions
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level);
+struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level, int final_level);
 int choose_splitting_dimension(float_t extremes[NDIM][2]);
 kpoint *choose_splitting_point(kpoint **dataset_ptrs, int len, int chosen_axis);
 void get_dataset_extremes(kpoint **dataset, float_t extremes[NDIM][2], int len, int axis);
@@ -62,98 +63,120 @@ int main(int argc, char *argv[]) {
   struct timespec ts;
   int len;
 
-  int numprocessors = 2;
+	int numprocs;
+  int *provided = malloc(sizeof(int *));
+	MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, provided);
+	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 
-  // kpoint dataset[11] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
-  //                      {8, 1}, {7, 2}, {8, 9}, {1, 1}, {0.55, 6}, {1.11111, 8.432}};
-  // len = sizeof(dataset) / sizeof(dataset[0]);
-  
-  if (argc == 2 ) {
-    len = atoi(argv[1]); 
-  } else if (argc == 1){
-    len = 100000000;
-  } else {
-    return 1;
-  }
-
-  kpoint *dataset = generate_dataset(len);
-  
-  printf("len: %d\n", len);
-
-  kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
-  get_dataset_ptrs(dataset, dataset_ptrs, len);
-
-  int nthreads;
-  struct kdnode *root;
-
-  #pragma omp parallel shared(nthreads)
-  {
-    #pragma omp single
-    {
-      nthreads = omp_get_num_threads();
-      printf("num threads: %d\n", nthreads);
-    }
-  }
-
-  printf("choosing splitting dimension..\n");
-  
-  float_t extremes[NDIM][2]; //min_value (index 0) and max value (index 1) in each dimension NDIM
-
-  get_dataset_extremes(dataset_ptrs, extremes, len, x_axis);
-  get_dataset_extremes(dataset_ptrs, extremes, len, y_axis);
- 
-  int chosen_axis = choose_splitting_dimension(extremes);
-
-  printf("starting pre-sorting..\n");
-  #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len)
-  {
-    #pragma omp single nowait
-    {
-      if(chosen_axis == x_axis) {
-        pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
-      } else {
-        pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_ge_y_axis);
-      }
-    }
-  }
-  printf("pre-sorting done!\n");
-
+	int my_rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
   if (my_rank == 0) {
-    kdnode *root;
-    float_t *chunks;
-    float_t *chunk_lengths;
-    root = build_kdtree_until_level(dataset, level=log(numprocessors));
+    kpoint dataset[11] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
+                         {8, 1}, {7, 2}, {8, 9}, {1, 1}, {0.55, 6}, {1.11111, 8.432}};
+    len = sizeof(dataset) / sizeof(dataset[0]);
 
-    int chunk_size = dataset/ numprocessors;
-    for (int i = 1; i < numprocessors; i++) {
-      mpi_send(chunk_lengths[i], MPI_INTEGER,... to process with id=counter_level)
-      mpi_send(chunks[i], chunk_lengths[i],... to process with id=counter_level)
-    }
-    build_kdtree(chunks[0], chunk_lengths[0],...); 
+    // if (argc == 2 ) {
+    //   len = atoi(argv[1]); 
+    // } else if (argc == 1){
+    //   len = 100000000;
+    // } else {
+    //   return 1;
+    // }
+    //
+    // kpoint *dataset = generate_dataset(len);
 
-  } else {
-    mpi_recv(len, from root...)
-    malloc(dataset with len);
-    mpi_recv(dataset, from root...);
-    build_kdtree(dataset,len,...);
-  }
+    printf("len: %d\n", len);
 
-  double tstart = CPU_TIME;
-  #pragma omp parallel shared(dataset_ptrs) firstprivate(extremes, chosen_axis, len) 
-  {
-    #pragma omp single nowait
+    kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
+    get_dataset_ptrs(dataset, dataset_ptrs, len);
+
+    int nthreads;
+    struct kdnode *root;
+
+    double tstart = CPU_TIME;
+    #pragma omp parallel shared(nthreads)
     {
-      int level = 0;
-      root = build_kdtree(dataset_ptrs, extremes, len, chosen_axis, level);
+      #pragma omp single
+      {
+        nthreads = omp_get_num_threads();
+        printf("num threads: %d\n", nthreads);
+      }
     }
+
+    printf("choosing splitting dimension..\n");
+    
+    float_t extremes[NDIM][2]; //min_value (index 0) and max value (index 1) in each dimension NDIM
+
+    get_dataset_extremes(dataset_ptrs, extremes, len, x_axis);
+    get_dataset_extremes(dataset_ptrs, extremes, len, y_axis);
+   
+    int chosen_axis = choose_splitting_dimension(extremes);
+
+    printf("starting pre-sorting..\n");
+    #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len)
+    {
+      #pragma omp single nowait
+      {
+        if(chosen_axis == x_axis) {
+          pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
+        } else {
+          pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_ge_y_axis);
+        }
+      }
+    }
+    printf("pre-sorting done!\n");
+
+    #pragma omp parallel shared(dataset_ptrs) firstprivate(extremes, chosen_axis, len) 
+    {
+      #pragma omp single nowait
+      {
+        int current_level = 0;
+        int final_level = log2(numprocs);
+        root = build_kdtree_until_level(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level);
+        printf("finished build kd_tree until level %d\n", final_level);
+      }
+    }
+    double telapsed = CPU_TIME - tstart;
+
+    printf("elapsed time: %f\n", telapsed);
+
+    // free(dataset);
+    free(dataset_ptrs);
+  } else {
+
   }
-  double telapsed = CPU_TIME - tstart;
+  
+  // if (my_rank == 0) {
+  //   kdnode *root;
+  //   float_t *chunks;
+  //   float_t *chunk_lengths;
+  //   root = build_kdtree_until_level(dataset, level=log(numprocessors));
+  //
+  //   int chunk_size = dataset/ numprocessors;
+  //   for (int i = 1; i < numprocessors; i++) {
+  //     mpi_send(chunk_lengths[i], MPI_INTEGER,... to process with id=counter_level)
+  //     mpi_send(chunks[i], chunk_lengths[i],... to process with id=counter_level)
+  //   }
+  //   build_kdtree(chunks[0], chunk_lengths[0],...); 
+  //
+  // } else {
+  //   mpi_recv(len, from root...)
+  //   malloc(dataset with len);
+  //   mpi_recv(dataset, from root...);
+  //   kdnode *chunk_root = build_kdtree(dataset,len,...);
+  //   mpi_send(chunk_root->split_point, to root process ...);
+  // }
 
-  printf("elapsed time: %f\n", telapsed);
+  // if (my_rank == 0) {
+  //   for (int i = 0; i < numprocessors; i++) {
+  //     mpi_irecv(float_t, from process id=i);
+  //   }
+  //   for (int i = 0; i < numprocessors; i++) {
+  //     mpi_wait(float_t, from process id=i);
+  //   }
+  // }
 
-  // free(dataset);
-  free(dataset_ptrs);
   return 0;
 }
 
@@ -230,6 +253,72 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
 
   #pragma omp task shared(right_points) firstprivate(extremes, len_right, chosen_axis, level) if(len_right >= build_cutoff) mergeable untied
     node->right = build_kdtree(right_points, extremes, len_right, chosen_axis, level+1);
+  
+  #pragma omp taskwait
+  return node;
+}
+
+struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int current_level, int final_level) {
+  if (current_level == final_level) {
+    return NULL;
+  }
+
+  if (len == 1) {
+    struct kdnode *leaf = malloc(sizeof(struct kdnode));
+    leaf->axis = previous_axis;
+    leaf->split = *dataset_ptrs[0];
+    leaf->left = NULL;
+    leaf->right = NULL;
+
+    return leaf;
+  }
+
+  struct kdnode *node = malloc(sizeof(struct kdnode));
+
+  int chosen_axis = choose_splitting_dimension(extremes);
+
+  if((current_level >= 0) && (current_level <= 3)) {
+    printf("reached level %d, len is %d\n", current_level, len);
+  }
+
+  #pragma omp taskgroup
+  {
+    if (chosen_axis != previous_axis) {
+      if(chosen_axis == x_axis) {
+        pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
+      } else {
+        pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_g_y_axis);
+      }
+    }   
+  }
+
+  kpoint *split_point = choose_splitting_point(dataset_ptrs, len, chosen_axis);
+  node->axis = chosen_axis;
+  node->split = *split_point;
+
+  kpoint **left_points, **right_points;
+
+  int median_idx = ceil(len / 2.0);
+  int len_left = median_idx - 1;    // length of the left points
+  int len_right = len - median_idx; // length of the right points
+  
+  if (len_left != 0) {
+    left_points = &dataset_ptrs[0];       // starting pointer of left_points
+
+    extremes[chosen_axis][0] = dataset_ptrs[0]->coords[chosen_axis]; //min value of chosen axis for left points
+    extremes[chosen_axis][1] = dataset_ptrs[len_left - 1]->coords[chosen_axis]; //max value of chosen axis for left points
+
+    #pragma omp task shared(left_points) firstprivate(extremes, len_left, chosen_axis, level) if(len_left >= build_cutoff) mergeable untied
+      node->left = build_kdtree_until_level(left_points, extremes, len_left, chosen_axis, current_level+1, final_level);
+  }
+
+  right_points = &dataset_ptrs[median_idx]; // starting pointer of right_points
+  
+  extremes[chosen_axis][0] = dataset_ptrs[median_idx]->coords[chosen_axis]; //min value of chosen axis for right points
+  extremes[chosen_axis][1] = dataset_ptrs[len - 1]->coords[chosen_axis]; //max value of chosen axis for right points
+
+  #pragma omp task shared(right_points) firstprivate(extremes, len_right, chosen_axis, level) if(len_right >= build_cutoff) mergeable untied
+    node->right = build_kdtree_until_level(right_points, extremes, len_right, chosen_axis, current_level+1, final_level);
   
   #pragma omp taskwait
   return node;

@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 {
 	int numprocs;
   int *provided = malloc(sizeof(int *));
-	MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, provided);
+	MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, provided);
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 
 	int my_rank;
@@ -35,9 +35,9 @@ int main(int argc, char *argv[])
 
   #pragma omp parallel 
   {
-    #pragma omp master 
+    #pragma omp single 
     {
-      printf("i am master thread, there are %d threads\n", omp_get_num_threads());
+      printf("i am thread %d, there are %d threads\n", omp_get_thread_num(), omp_get_num_threads());
     }
   }
 
