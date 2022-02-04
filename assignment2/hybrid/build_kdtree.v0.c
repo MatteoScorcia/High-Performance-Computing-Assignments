@@ -155,41 +155,10 @@ int main(int argc, char *argv[]) {
   MPI_Recv(&len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
   printf("i am processor %d, received len %d\n", my_rank, len);
   kpoint *dataset = malloc(len * sizeof(kpoint));
-  MPI_Recv(&dataset, len*2, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
+  MPI_Recv(&dataset, len*2, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &status);
   
   printf("i am processor %d, first point received: (%f,%f)\n", my_rank, dataset->coords[0], dataset->coords[1]);
   
-  
-  // if (my_rank == 0) {
-  //   kdnode *root;
-  //   float_t *chunks;
-  //   float_t *chunk_lengths;
-  //   root = build_kdtree_until_level(dataset, level=log(numprocessors));
-  //
-  //   int chunk_size = dataset/ numprocessors;
-  //   for (int i = 1; i < numprocessors; i++) {
-  //     mpi_send(chunk_lengths[i], MPI_INTEGER,... to process with id=counter_level)
-  //     mpi_send(chunks[i], chunk_lengths[i],... to process with id=counter_level)
-  //   }
-  //   build_kdtree(chunks[0], chunk_lengths[0],...); 
-  //
-  // } else {
-  //   mpi_recv(len, from root...)
-  //   malloc(dataset with len);
-  //   mpi_recv(dataset, from root...);
-  //   kdnode *chunk_root = build_kdtree(dataset,len,...);
-  //   mpi_send(chunk_root->split_point, to root process ...);
-  // }
-
-  // if (my_rank == 0) {
-  //   for (int i = 0; i < numprocessors; i++) {
-  //     mpi_irecv(float_t, from process id=i);
-  //   }
-  //   for (int i = 0; i < numprocessors; i++) {
-  //     mpi_wait(float_t, from process id=i);
-  //   }
-  // }
-
 	MPI_Finalize();
   return 0;
 }
@@ -281,7 +250,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
       kpoint *chunk = malloc(len * sizeof(kpoint));
       copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
       printf("first kpoint sent is (%f,%f)\n", chunk[0].coords[0], chunk[0].coords[1]);
-      MPI_Send(&chunk[0], len * 2, MPI_FLOAT_T, counter, 0, MPI_COMM_WORLD);
+      MPI_Send(&chunk, len * 2, MPI_DOUBLE, counter, 0, MPI_COMM_WORLD);
       free(chunk);
       counter++;
     }
