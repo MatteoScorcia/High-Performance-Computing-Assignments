@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
     }
     printf("pre-sorting done!\n");
 
-    #pragma omp parallel shared(dataset_ptrs) firstprivate(extremes, chosen_axis, len) 
+    #pragma omp parallel shared(dataset_ptrs, root) firstprivate(extremes, chosen_axis, len) 
     {
       #pragma omp single nowait
       {
@@ -151,7 +151,6 @@ int main(int argc, char *argv[]) {
   int recv_len;
   MPI_Status status;
   MPI_Recv(&recv_len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-  printf("i am processor %d, received len %d\n", my_rank, recv_len);
 
   kpoint *recv_dataset = malloc(len * sizeof(kpoint));
   MPI_Recv(recv_dataset, len * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
@@ -166,14 +165,28 @@ int main(int argc, char *argv[]) {
   MPI_Recv(&recv_axis, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 
   int level = 0;
-  struct kdnode *chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len, recv_axis, 0);
+  struct kdnode *chunk_root;
+
+  #pragma omp parallel shared(recv_dataset_ptrs, chunk_root) firstprivate(recv_extremes, recv_axis, recv_len) 
+  {
+    #pragma omp single nowait
+    {
+      int current_level = 0;
+      chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len, recv_axis, current_level);
+    }
+  }
   
+  printf("i am mpi process %d, my chunk root node is %f,%f\n", my_rank, chunk_root->split.coords[0], chunk_root->split.coords[1]);
+
   if (my_rank == 0) { 
     double telapsed = CPU_TIME - tstart;
-
+    
     printf("elapsed time of mpi process 0: %f\n", telapsed);
   }
 
+
+  free(recv_dataset);
+  free(recv_dataset_ptrs);
 	MPI_Finalize();
   return 0;
 }
