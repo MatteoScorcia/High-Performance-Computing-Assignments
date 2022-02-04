@@ -143,6 +143,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
+    printf("root node is %f,%f\n", root->split.coords[0], root->split.coords[1]);
 
     // free(dataset);
     free(dataset_ptrs);
