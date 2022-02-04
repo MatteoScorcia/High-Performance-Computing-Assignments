@@ -76,8 +76,6 @@ int main(int argc, char *argv[]) {
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-  printf("mpi process %d init!\n", my_rank);
-
   if (my_rank == 0) {
     kpoint dataset[11] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
                          {8, 1}, {7, 2}, {8, 9}, {1, 1}, {0.55, 6}, {1.11111, 8.432}};
@@ -345,7 +343,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     extremes[chosen_axis][0] = dataset_ptrs[0]->coords[chosen_axis]; //min value of chosen axis for left points
     extremes[chosen_axis][1] = dataset_ptrs[len_left - 1]->coords[chosen_axis]; //max value of chosen axis for left points
 
-    #pragma omp task shared(left_points) firstprivate(extremes, len_left, chosen_axis, current_level, final_level, counter) if(len_left >= build_cutoff) mergeable untied
+    #pragma omp task shared(left_points, counter) firstprivate(extremes, len_left, chosen_axis, current_level, final_level) if(len_left >= build_cutoff) mergeable untied
       node->left = build_kdtree_until_level_then_scatter(left_points, extremes, len_left, chosen_axis, current_level+1, final_level, counter);
   }
 
@@ -354,7 +352,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
   extremes[chosen_axis][0] = dataset_ptrs[median_idx]->coords[chosen_axis]; //min value of chosen axis for right points
   extremes[chosen_axis][1] = dataset_ptrs[len - 1]->coords[chosen_axis]; //max value of chosen axis for right points
 
-  #pragma omp task shared(right_points) firstprivate(extremes, len_right, chosen_axis, current_level, final_level, counter) if(len_right >= build_cutoff) mergeable untied
+  #pragma omp task shared(right_points, counter) firstprivate(extremes, len_right, chosen_axis, current_level, final_level) if(len_right >= build_cutoff) mergeable untied
     node->right = build_kdtree_until_level_then_scatter(right_points, extremes, len_right, chosen_axis, current_level+1, final_level, counter);
   
   #pragma omp taskwait
