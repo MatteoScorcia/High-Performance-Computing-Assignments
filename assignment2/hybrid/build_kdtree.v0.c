@@ -53,7 +53,7 @@ void copy_dataset_ptrs(kpoint **dataset_ptrs, kpoint **new_dataset, int len);
 
 // kd-tree build functions
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level);
-struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level, int final_level);
+struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level, int final_level, int counter);
 int choose_splitting_dimension(float_t extremes[NDIM][2]);
 kpoint *choose_splitting_point(kpoint **dataset_ptrs, int len, int chosen_axis);
 void get_dataset_extremes(kpoint **dataset, float_t extremes[NDIM][2], int len, int axis);
@@ -134,12 +134,11 @@ int main(int argc, char *argv[]) {
       {
         int current_level = 0;
         int final_level = log2(numprocs);
-        root = build_kdtree_until_level(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level);
+        root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level);
         printf("finished build kd_tree until level %d\n", final_level);
       }
     }
 
-    printf("start scattering chunks of dataset through mpi..\n");
     double telapsed = CPU_TIME - tstart;
 
     printf("elapsed time: %f\n", telapsed);
@@ -262,8 +261,14 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
   return node;
 }
 
-struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int current_level, int final_level) {
+struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int current_level, int final_level, int counter) {
   if (current_level == final_level) {
+    #pragma omp critical 
+    {
+      printf("sending to mpi process %d, dataset chunk\n", counter);
+      // MPI_Send(...);
+      counter++;
+    }
     return NULL;
   }
 
@@ -312,8 +317,8 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs, float_t extremes[
     extremes[chosen_axis][0] = dataset_ptrs[0]->coords[chosen_axis]; //min value of chosen axis for left points
     extremes[chosen_axis][1] = dataset_ptrs[len_left - 1]->coords[chosen_axis]; //max value of chosen axis for left points
 
-    #pragma omp task shared(left_points) firstprivate(extremes, len_left, chosen_axis, current_level, final_level) if(len_left >= build_cutoff) mergeable untied
-      node->left = build_kdtree_until_level(left_points, extremes, len_left, chosen_axis, current_level+1, final_level);
+    #pragma omp task shared(left_points) firstprivate(extremes, len_left, chosen_axis, current_level, final_level, counter) if(len_left >= build_cutoff) mergeable untied
+      node->left = build_kdtree_until_level_then_scatter(left_points, extremes, len_left, chosen_axis, current_level+1, final_level, counter);
   }
 
   right_points = &dataset_ptrs[median_idx]; // starting pointer of right_points
@@ -321,8 +326,8 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs, float_t extremes[
   extremes[chosen_axis][0] = dataset_ptrs[median_idx]->coords[chosen_axis]; //min value of chosen axis for right points
   extremes[chosen_axis][1] = dataset_ptrs[len - 1]->coords[chosen_axis]; //max value of chosen axis for right points
 
-  #pragma omp task shared(right_points) firstprivate(extremes, len_right, chosen_axis, current_level, final_level) if(len_right >= build_cutoff) mergeable untied
-    node->right = build_kdtree_until_level(right_points, extremes, len_right, chosen_axis, current_level+1, final_level);
+  #pragma omp task shared(right_points) firstprivate(extremes, len_right, chosen_axis, current_level, final_level, counter) if(len_right >= build_cutoff) mergeable untied
+    node->right = build_kdtree_until_level_then_scatter(right_points, extremes, len_right, chosen_axis, current_level+1, final_level, counter);
   
   #pragma omp taskwait
   return node;
