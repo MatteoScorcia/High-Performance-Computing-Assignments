@@ -254,7 +254,9 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     {
       printf("sending to mpi process %d, dataset chunk\n", counter);
       MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
-      double len2 = 1234.1234;
+      kpoint *chunk = malloc(len * sizeof(kpoint));
+      copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
+      double len2 = chunk[0].coords[0];
       MPI_Send(&len2, 1, MPI_DOUBLE, counter, 0, MPI_COMM_WORLD);
       // kpoint *chunk = malloc(len * sizeof(kpoint));
       // copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
