@@ -155,8 +155,9 @@ int main(int argc, char *argv[]) {
 
   int recv_len;
   MPI_Status status;
+  printf("i am pmpi process %d, receiving len..", my_rank);
   MPI_Recv(&recv_len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-
+  
   kpoint *recv_dataset = malloc(len * sizeof(kpoint));
   MPI_Recv(recv_dataset, len * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
 
