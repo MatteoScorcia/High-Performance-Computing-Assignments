@@ -150,13 +150,16 @@ int main(int argc, char *argv[]) {
     free(dataset_ptrs);
   } 
 
-  int recv_len;
+  int recv_len, len2;
   MPI_Status status;
   MPI_Recv(&recv_len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
   printf("i am processor %d, received len %d\n", my_rank, recv_len);
-  double prova;
-  MPI_Recv(&prova, 1, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
-  printf("received %f\n", prova);
+  MPI_Recv(&len2, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+  printf("i am processor %d, received len2 %d\n", my_rank, len2);
+
+  // double prova;
+  // MPI_Recv(&prova, 1, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
+  // printf("received prova %f\n", prova);
   // kpoint *recv_dataset = malloc(len * sizeof(kpoint));
   // MPI_Recv(&recv_dataset, len*2, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
   
@@ -250,13 +253,15 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     {
       printf("sending to mpi process %d, dataset chunk\n", counter);
       MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
+      int len2 = 1234;
+      MPI_Send(&len2, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
       // kpoint *chunk = malloc(len * sizeof(kpoint));
       // copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
       // printf("first kpoint sent is (%f,%f)\n", chunk[0].coords[0], chunk[0].coords[1]);
       // MPI_Send(&chunk, 2, MPI_FLOAT_T, counter, 0, MPI_COMM_WORLD);
       // free(chunk);
-      double prova = dataset_ptrs[0]->coords[0];
-      MPI_Send(&prova, 1, MPI_FLOAT_T, counter, 0, MPI_COMM_WORLD);
+      // double prova = dataset_ptrs[0]->coords[0];
+      // MPI_Send(&prova, 1, MPI_FLOAT_T, counter, 0, MPI_COMM_WORLD);
       counter++;
     }
     return NULL;
