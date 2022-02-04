@@ -156,6 +156,7 @@ int main(int argc, char *argv[]) {
   printf("i am processor %d, received len %d\n", my_rank, len);
   double prova;
   MPI_Recv(&prova, 1, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
+  printf("received %f\n", prova);
   // kpoint *recv_dataset = malloc(len * sizeof(kpoint));
   // MPI_Recv(&recv_dataset, len*2, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
   
