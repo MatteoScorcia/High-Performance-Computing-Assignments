@@ -171,6 +171,8 @@ int main(int argc, char *argv[]) {
 
   int level = 0;
   struct kdnode *chunk_root;
+  
+  printf("i am mpi process %d, start building my kd-tree..\n", my_rank);
 
   #pragma omp parallel shared(recv_dataset_ptrs, chunk_root) firstprivate(recv_extremes, recv_axis, recv_len) 
   {
@@ -225,7 +227,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
   int chosen_axis = choose_splitting_dimension(extremes);
 
   if((level >= 0) && (level <= 3)) {
-    printf("reached level %d, len is %d\n", level, len);
+    // printf("reached level %d, len is %d\n", level, len);
   }
 
   // printf("y axis max: %f, min: %f\n", extremes[y_axis][1], extremes[y_axis][0]);
