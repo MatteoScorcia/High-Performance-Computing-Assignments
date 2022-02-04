@@ -142,8 +142,12 @@ int main(int argc, char *argv[]) {
         printf("finished build kd_tree until level %d\n", final_level);
       }
     }
-
-    printf("root node is %f,%f\n", root->split.coords[0], root->split.coords[1]);
+    
+    if (root != NULL) {
+      printf("root node is %f,%f\n", root->split.coords[0], root->split.coords[1]);
+    } else {
+      printf("root node is NULL\n");
+    }
 
     // free(dataset);
     free(dataset_ptrs);
