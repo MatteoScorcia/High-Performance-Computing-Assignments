@@ -52,7 +52,7 @@ int compare_g_y_axis(const void *a, const void *b);
 kpoint *generate_dataset(int len);
 void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len);
 void copy_dataset_ptrs(kpoint **dataset_ptrs, kpoint **new_dataset, int len);
-void copy_dataset_from_pointers(kpoint *new_dataset, kpoint **dataset_ptrs, int len);
+void copy_dataset_from_ptrs(kpoint *new_dataset, kpoint **dataset_ptrs, int len);
 
 // kd-tree build functions
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level);
@@ -279,7 +279,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
       printf("sending to mpi process %d, dataset chunk\n", counter);
       MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
       kpoint *chunk = malloc(len * sizeof(kpoint));
-      copy_dataset_from_pointers(chunk, dataset_ptrs, len);
+      copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
       MPI_Send(&chunk, len * 2, MPI_FLOAT_T, counter, 0, MPI_COMM_WORLD);
       free(chunk);
       counter++;
