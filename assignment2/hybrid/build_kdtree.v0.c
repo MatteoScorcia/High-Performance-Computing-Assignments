@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
   
   float_t extremes[NDIM][2] = {};
   MPI_Recv(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
-  printf("received extremes[1][1] %f,%f\n", extremes[1][1], extremes[1][1]);
+  printf("received extremes %f,%f\n", extremes[0][1], extremes[1][0]);
   // kdnode *chunk_root = build_kdtree(chunk_ptrs, extremes, len, axis, level);
    
 	MPI_Finalize();
@@ -257,7 +257,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
       MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
  
       MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
-      printf("extremes[1][1] %f,%f\n", extremes[1][1], extremes[1][1]);
+      printf("send extremes[1][1] %f,%f\n", extremes[0][1], extremes[1][1]);
 
       free(chunk);
       counter++;
