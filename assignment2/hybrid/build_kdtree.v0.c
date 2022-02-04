@@ -52,6 +52,7 @@ int compare_g_y_axis(const void *a, const void *b);
 kpoint *generate_dataset(int len);
 void get_dataset_ptrs(kpoint *dataset, kpoint **dataset_ptrs, int len);
 void copy_dataset_ptrs(kpoint **dataset_ptrs, kpoint **new_dataset, int len);
+void copy_dataset_from_pointers(kpoint *new_dataset, kpoint **dataset_ptrs, int len);
 
 // kd-tree build functions
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level);
@@ -277,6 +278,10 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     {
       printf("sending to mpi process %d, dataset chunk\n", counter);
       MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
+      kpoint *chunk = malloc(len * sizeof(kpoint));
+      copy_dataset_from_pointers(chunk, dataset_ptrs, len);
+      MPI_Send(&chunk, len * 2, MPI_FLOAT_T, counter, 0, MPI_COMM_WORLD);
+      free(chunk);
       counter++;
     }
     return NULL;
@@ -375,6 +380,13 @@ void copy_extremes(float_t old_extremes[NDIM][2], float_t new_extremes[NDIM][2])
   for (int dim = 0; dim < NDIM; dim++) {
     new_extremes[dim][0] = old_extremes[dim][0];
     new_extremes[dim][1] = old_extremes[dim][1];  
+  }
+}
+
+void copy_dataset_from_ptrs(kpoint *new_dataset, kpoint **dataset_ptrs, int len) {
+  for (int i = 0; i < len; i++) {
+    new_dataset[i].coords[0] = dataset_ptrs[i]->coords[0];
+    new_dataset[i].coords[1] = dataset_ptrs[i]->coords[1];
   }
 }
 
