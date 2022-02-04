@@ -147,15 +147,17 @@ int main(int argc, char *argv[]) {
 
     // free(dataset);
     free(dataset_ptrs);
-  } else {
-    int len;
-    MPI_Status status;
-    MPI_Recv(&len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-    kpoint *dataset = malloc(len * sizeof(kpoint));
-    MPI_Recv(&dataset, len*2, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
-    
-    printf("i am processor %d, first poin received: (%f,%f)\n", my_rank, dataset->coords[0], dataset->coords[1]);
-  }
+  } 
+
+  int len;
+  MPI_Status status;
+  MPI_Recv(&len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+  printf("i am processor %d, received len %d\n", my_rank, len);
+  kpoint *dataset = malloc(len * sizeof(kpoint));
+  MPI_Recv(&dataset, len*2, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
+  
+  printf("i am processor %d, first point received: (%f,%f)\n", my_rank, dataset->coords[0], dataset->coords[1]);
+  
   
   // if (my_rank == 0) {
   //   kdnode *root;
