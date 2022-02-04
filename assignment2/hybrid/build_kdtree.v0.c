@@ -134,9 +134,9 @@ int main(int argc, char *argv[]) {
     {
       #pragma omp single nowait
       {
-        int current_level = 0;
+        int current_level = 0, counter = 0;
         int final_level = log2(numprocs);
-        root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level);
+        root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, counter);
         printf("finished build kd_tree until level %d\n", final_level);
       }
     }
