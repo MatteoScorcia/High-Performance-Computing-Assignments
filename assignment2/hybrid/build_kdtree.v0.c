@@ -154,9 +154,8 @@ int main(int argc, char *argv[]) {
   MPI_Status status;
   MPI_Recv(&len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
   printf("i am processor %d, received len %d\n", my_rank, len);
-  // kpoint *recv_dataset = malloc(len * sizeof(kpoint));
-  kpoint recv_dataset[0];
-  MPI_Recv(&recv_dataset, 2, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
+  kpoint *recv_dataset = malloc(len * sizeof(kpoint));
+  // MPI_Recv(&recv_dataset, 2, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
   
   printf("i am processor %d, first point received: (%f,%f)\n", my_rank, recv_dataset[0].coords[0], recv_dataset[0].coords[1]);
   
