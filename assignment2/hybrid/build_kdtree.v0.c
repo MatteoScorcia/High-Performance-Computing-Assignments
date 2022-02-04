@@ -137,6 +137,8 @@ int main(int argc, char *argv[]) {
         printf("finished build kd_tree until level %d\n", final_level);
       }
     }
+
+    printf("start scattering chunks of dataset through mpi..\n");
     double telapsed = CPU_TIME - tstart;
 
     printf("elapsed time: %f\n", telapsed);
