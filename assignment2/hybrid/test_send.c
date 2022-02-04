@@ -28,7 +28,9 @@ int main(int argc, char *argv[])
 
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-
+ 
+  printf("mpi process %d init!\n", my_rank);
+  
   kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
                        {8, 1}, {7, 2}, {8, 9}, {1, 1}};
   int len = sizeof(dataset) / sizeof(dataset[0]);

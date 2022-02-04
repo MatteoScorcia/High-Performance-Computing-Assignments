@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-  printf("rank %d init!\n", my_rank);
+  printf("mpi process %d init!\n", my_rank);
 
   if (my_rank == 0) {
     kpoint dataset[11] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
