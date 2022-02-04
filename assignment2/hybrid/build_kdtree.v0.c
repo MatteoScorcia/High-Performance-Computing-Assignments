@@ -152,8 +152,8 @@ int main(int argc, char *argv[]) {
 
   int recv_len;
   MPI_Status status;
-  MPI_Recv(&recv_len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-  printf("i am processor %d, received len %d\n", my_rank, recv_len);
+  // MPI_Recv(&recv_len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+  // printf("i am processor %d, received len %d\n", my_rank, recv_len);
   double prova;
   MPI_Recv(&prova, 1, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
   printf("received %f\n", prova);
@@ -249,7 +249,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     #pragma omp critical 
     {
       printf("sending to mpi process %d, dataset chunk\n", counter);
-      MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
+      // MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
       // kpoint *chunk = malloc(len * sizeof(kpoint));
       // copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
       // printf("first kpoint sent is (%f,%f)\n", chunk[0].coords[0], chunk[0].coords[1]);
