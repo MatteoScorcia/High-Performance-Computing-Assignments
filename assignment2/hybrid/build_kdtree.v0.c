@@ -274,7 +274,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     #pragma omp critical 
     {
       printf("sending to mpi process %d, dataset chunk\n", counter);
-      MPI_Send(&len, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+      MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
       counter++;
     }
     return NULL;
