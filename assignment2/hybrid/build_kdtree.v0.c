@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
   printf("i am processor %d, received len %d\n", my_rank, recv_len);
 
   kpoint *recv_dataset = malloc(len * sizeof(float_t));
-  MPI_Recv(recv_dataset, 2, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &status);
+  MPI_Recv(recv_dataset, 2 * sizeof(float_t), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
   
   printf("i am processor %d, first point received: (%f,%f)\n", my_rank, recv_dataset[0].coords[0], recv_dataset[0].coords[1]);
    
@@ -252,7 +252,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
       kpoint *chunk = malloc(len * sizeof(kpoint));
       copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
       printf("first kpoint sent is (%f,%f)\n", chunk[0].coords[0], chunk[0].coords[1]);
-      MPI_Send(chunk, 2, MPI_DOUBLE, counter, 0, MPI_COMM_WORLD);
+      MPI_Send(chunk, 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
 
       free(chunk);
       counter++;
