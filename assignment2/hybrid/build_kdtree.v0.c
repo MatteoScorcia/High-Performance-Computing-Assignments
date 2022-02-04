@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
     free(dataset_ptrs);
   } 
 
-  int len;
+  len;
   MPI_Status status;
   MPI_Recv(&len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
   printf("i am processor %d, received len %d\n", my_rank, len);
