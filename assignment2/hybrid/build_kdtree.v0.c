@@ -21,8 +21,10 @@
 
 #if !defined(DOUBLE_PRECISION)
 #define float_t float
+#define MPI_FLOAT_T MPI_FLOAT
 #else
 #define float_t double
+#define MPI_FLOAT_T MPI_DOUBLE
 #endif
 #define NDIM 2
 
@@ -146,7 +148,13 @@ int main(int argc, char *argv[]) {
     // free(dataset);
     free(dataset_ptrs);
   } else {
-
+    int len;
+    MPI_Status status;
+    MPI_Recv(&len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+    kpoint *dataset = malloc(len * sizeof(kpoint));
+    MPI_Recv(&dataset, len*2, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
+    
+    printf("i am processor %d, first poin received: (%f,%f)\n", my_rank, dataset->coords[0], dataset->coords[1]);
   }
   
   // if (my_rank == 0) {
@@ -266,7 +274,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     #pragma omp critical 
     {
       printf("sending to mpi process %d, dataset chunk\n", counter);
-      // MPI_Send(...);
+      MPI_Send(&len, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
       counter++;
     }
     return NULL;
