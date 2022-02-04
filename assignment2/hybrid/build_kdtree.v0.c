@@ -152,8 +152,8 @@ int main(int argc, char *argv[]) {
 
   len;
   MPI_Status status;
-  MPI_Recv(&len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-  printf("i am processor %d, received len %d\n", my_rank, len);
+  // MPI_Recv(&len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+  // printf("i am processor %d, received len %d\n", my_rank, len);
   double prova;
   MPI_Recv(&prova, 1, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
   printf("received %f\n", prova);
@@ -256,7 +256,6 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
       // MPI_Send(&chunk, 2, MPI_FLOAT_T, counter, 0, MPI_COMM_WORLD);
       // free(chunk);
       double prova = dataset_ptrs[0]->coords[0];
-      printf("sending %f\n", prova);
       MPI_Send(&prova, 1, MPI_FLOAT_T, counter, 0, MPI_COMM_WORLD);
       counter++;
     }
