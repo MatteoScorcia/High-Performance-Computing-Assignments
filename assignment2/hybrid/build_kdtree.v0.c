@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
   kpoint *recv_dataset = malloc(len * sizeof(kpoint));
   MPI_Recv(recv_dataset, len * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
   
-  printf("i am processor %d, first point received: (%f,%f)\n", my_rank, recv_dataset[0].coords[0], recv_dataset[0].coords[1]);
+  printf("i am processor %d, second point received: (%f,%f)\n", my_rank, recv_dataset[1].coords[0], recv_dataset[2].coords[1]);
    
 	MPI_Finalize();
   return 0;
