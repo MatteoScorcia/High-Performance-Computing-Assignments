@@ -21,10 +21,10 @@
 
 #if !defined(DOUBLE_PRECISION)
 #define float_t float
-#define MPI_FLOAT_T MPI_FLOAT
+#define FLOAT_T MPI_FLOAT
 #else
 #define float_t double
-#define MPI_FLOAT_T MPI_DOUBLE
+#define FLOAT_T MPI_DOUBLE
 #endif
 #define NDIM 2
 
@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
   MPI_Status status;
   MPI_Recv(&recv_len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
   printf("i am processor %d, received len %d\n", my_rank, recv_len);
-  MPI_Recv(&len2, 1, MPI_FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
+  MPI_Recv(&len2, 1, FLOAT_T, 0, 0, MPI_COMM_WORLD, &status);
   printf("i am processor %d, received len2 %f\n", my_rank, len2);
 
   // double prova;
@@ -257,7 +257,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
       kpoint *chunk = malloc(len * sizeof(kpoint));
       copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
       double len2 = chunk[0].coords[0];
-      MPI_Send(&len2, 1, MPI_FLOAT_T, counter, 0, MPI_COMM_WORLD);
+      MPI_Send(&len2, 1, FLOAT_T, counter, 0, MPI_COMM_WORLD);
       // kpoint *chunk = malloc(len * sizeof(kpoint));
       // copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
       // printf("first kpoint sent is (%f,%f)\n", chunk[0].coords[0], chunk[0].coords[1]);
