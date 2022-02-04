@@ -65,6 +65,7 @@ void copy_extremes(float_t old_extremes[NDIM][2], float_t new_extremes[NDIM][2])
 int main(int argc, char *argv[]) {
 
   struct timespec ts;
+  double tstart;
   int len;
 
 	int numprocs;
@@ -98,7 +99,7 @@ int main(int argc, char *argv[]) {
     int nthreads;
     struct kdnode *root;
 
-    double tstart = CPU_TIME;
+    tstart = CPU_TIME;
     #pragma omp parallel shared(nthreads)
     {
       #pragma omp single
@@ -142,9 +143,6 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    double telapsed = CPU_TIME - tstart;
-
-    printf("elapsed time: %f\n", telapsed);
 
     // free(dataset);
     free(dataset_ptrs);
@@ -157,12 +155,25 @@ int main(int argc, char *argv[]) {
 
   kpoint *recv_dataset = malloc(len * sizeof(kpoint));
   MPI_Recv(recv_dataset, len * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+
+  kpoint **recv_dataset_ptrs = malloc(len * sizeof(kpoint *));
+  get_dataset_ptrs(recv_dataset, recv_dataset_ptrs, recv_len);
   
-  float_t extremes[NDIM][2] = {};
-  MPI_Recv(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
-  printf("received extremes %f,%f,%f,%f\n", extremes[0][0], extremes[0][1], extremes[1][0], extremes[1][1]);
-  // kdnode *chunk_root = build_kdtree(chunk_ptrs, extremes, len, axis, level);
-   
+  float_t recv_extremes[NDIM][2] = {};
+  MPI_Recv(recv_extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+
+  int recv_axis;
+  MPI_Recv(&recv_axis, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+
+  int level = 0;
+  struct kdnode *chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len, recv_axis, 0);
+  
+  if (my_rank == 0) { 
+    double telapsed = CPU_TIME - tstart;
+
+    printf("elapsed time of mpi process 0: %f\n", telapsed);
+  }
+
 	MPI_Finalize();
   return 0;
 }
@@ -257,7 +268,8 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
       MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
  
       MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
-      printf("send extremes %f,%f,%f,%f\n", extremes[0][0], extremes[0][1], extremes[1][0], extremes[1][1]);
+
+      MPI_Send(&previous_axis, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
 
       free(chunk);
       counter++;
