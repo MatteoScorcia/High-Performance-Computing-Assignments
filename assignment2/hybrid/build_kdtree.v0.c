@@ -76,6 +76,8 @@ int main(int argc, char *argv[]) {
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
+  tstart = CPU_TIME;
+
   if (my_rank == 0) {
     kpoint dataset[16] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
                          {8, 1}, {7, 2}, {8, 9}, {1, 1}, {0.55, 6},
@@ -187,12 +189,9 @@ int main(int argc, char *argv[]) {
   
   printf("i am mpi process %d, my chunk root node is %f,%f\n", my_rank, chunk_root->split.coords[0], chunk_root->split.coords[1]);
 
-  if (my_rank == 0) { 
-    double telapsed = CPU_TIME - tstart;
-    
-    printf("elapsed time of mpi process 0: %f\n", telapsed);
-  }
-
+  double telapsed = CPU_TIME - tstart;
+  
+  printf("elapsed time of mpi process %d: %f\n", my_rank, telapsed);
 
   free(recv_dataset);
   free(recv_dataset_ptrs);
@@ -227,10 +226,6 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
   struct kdnode *node = malloc(sizeof(struct kdnode));
 
   int chosen_axis = choose_splitting_dimension(extremes);
-
-  if((level >= 0) && (level <= 3)) {
-    // printf("reached level %d, len is %d\n", level, len);
-  }
 
   #pragma omp taskgroup
   {
