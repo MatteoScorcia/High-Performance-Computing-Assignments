@@ -146,17 +146,17 @@ int main(int argc, char *argv[]) {
 
     printf("starting scattering dataset chunks to other mpi processes...\n"); //for now it works only with numprocs = 2 (final level = 1)
 
-    int median_idx = ceil(len/2.0);
-    int first_chunk_size = median_idx - 1;
-    int second_chunk_size = len - median_idx;
+      int median_idx = ceil(len/2.0);
+      int first_chunk_size = median_idx - 1;
+      int second_chunk_size = len - median_idx;
 
-    kpoint *aligned_dataset = malloc(first_chunk_size * sizeof(kpoint));
-    copy_dataset_from_ptrs(aligned_dataset, dataset_ptrs, len);
+      kpoint *aligned_dataset = malloc(first_chunk_size * sizeof(kpoint));
+      copy_dataset_from_ptrs(aligned_dataset, dataset_ptrs, len);
 
-    MPI_Send(&aligned_dataset[0], first_chunk_size * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
-    MPI_Send(&aligned_dataset[median_idx], first_chunk_size * sizeof(kpoint), MPI_BYTE, 1, 0, MPI_COMM_WORLD);
+      MPI_Send(&aligned_dataset[0], first_chunk_size * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
+      MPI_Send(&aligned_dataset[median_idx], first_chunk_size * sizeof(kpoint), MPI_BYTE, 1, 0, MPI_COMM_WORLD);
 
-    free(aligned_dataset);
+      free(aligned_dataset);
     
     if (root != NULL) {
       printf("root node is %f,%f\n", root->split.coords[0], root->split.coords[1]);
