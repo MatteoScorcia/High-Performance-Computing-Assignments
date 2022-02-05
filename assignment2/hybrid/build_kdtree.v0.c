@@ -79,20 +79,20 @@ int main(int argc, char *argv[]) {
   tstart = CPU_TIME;
 
   if (my_rank == 0) {
-    kpoint dataset[16] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
-                         {8, 1}, {7, 2}, {8, 9}, {1, 1}, {0.55, 6},
-                         {1.11111, 8.432}, {9, 2.7}, {4.3253, 42}, {0.1224, 0.4635}, {0.124, 0.773}, {0.4336, 0.7456}};
-    len = sizeof(dataset) / sizeof(dataset[0]);
+    // kpoint dataset[16] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
+    //                      {8, 1}, {7, 2}, {8, 9}, {1, 1}, {0.55, 6},
+    //                      {1.11111, 8.432}, {9, 2.7}, {4.3253, 42}, {0.1224, 0.4635}, {0.124, 0.773}, {0.4336, 0.7456}};
+    // len = sizeof(dataset) / sizeof(dataset[0]);
 
-    // if (argc == 2 ) {
-    //   len = atoi(argv[1]); 
-    // } else if (argc == 1){
-    //   len = 100000000;
-    // } else {
-    //   return 1;
-    // }
-    //
-    // kpoint *dataset = generate_dataset(len);
+    if (argc == 2 ) {
+      len = atoi(argv[1]);
+    } else if (argc == 1){
+      len = 100000000;
+    } else {
+      return 1;
+    }
+
+    kpoint *dataset = generate_dataset(len);
 
     printf("len: %d\n", len);
 
@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
       printf("root node is NULL\n");
     }
 
-    // free(dataset);
+    free(dataset);
     free(dataset_ptrs);
   } 
 
