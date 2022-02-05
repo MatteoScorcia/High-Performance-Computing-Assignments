@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
       int first_chunk_size = median_idx - 1;
       int second_chunk_size = len - median_idx;
 
-      kpoint *aligned_dataset = malloc(first_chunk_size * sizeof(kpoint));
+      kpoint *aligned_dataset = malloc(len * sizeof(kpoint));
       copy_dataset_from_ptrs(aligned_dataset, dataset_ptrs, len);
 
       MPI_Send(&aligned_dataset[0], first_chunk_size * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
