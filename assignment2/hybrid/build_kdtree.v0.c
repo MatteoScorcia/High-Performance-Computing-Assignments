@@ -77,8 +77,9 @@ int main(int argc, char *argv[]) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
   if (my_rank == 0) {
-    kpoint dataset[11] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
-                         {8, 1}, {7, 2}, {8, 9}, {1, 1}, {0.55, 6}, {1.11111, 8.432}};
+    kpoint dataset[16] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
+                         {8, 1}, {7, 2}, {8, 9}, {1, 1}, {0.55, 6},
+                         {1.11111, 8.432}, {9, 2.7}, {4.3253, 42}, {0.1224, 0.4635}, {0.124, 0.773}, {0.4336, 0.7456}};
     len = sizeof(dataset) / sizeof(dataset[0]);
 
     // if (argc == 2 ) {
@@ -132,16 +133,30 @@ int main(int argc, char *argv[]) {
     }
     printf("pre-sorting done!\n");
 
-    #pragma omp parallel shared(dataset_ptrs, root) firstprivate(extremes, chosen_axis, len) 
+    int final_level = log2(numprocs);
+    #pragma omp parallel shared(dataset_ptrs, root) firstprivate(extremes, chosen_axis, len, final_level) 
     {
       #pragma omp single nowait
       {
         int current_level = 0, counter = 0;
-        int final_level = log2(numprocs);
         root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, counter);
         printf("finished build kd_tree until level %d\n", final_level);
       }
     }
+
+    printf("starting scattering dataset chunks to other mpi processes...\n"); //for now it works only with numprocs = 2 (final level = 1)
+
+    int median_idx = ceil(len/2.0);
+    int first_chunk_size = median_idx - 1;
+    int second_chunk_size = len - median_idx;
+
+    kpoint *aligned_dataset = malloc(first_chunk_size * sizeof(kpoint));
+    copy_dataset_from_ptrs(aligned_dataset, dataset_ptrs, len);
+
+    MPI_Send(&aligned_dataset[0], first_chunk_size * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(&aligned_dataset[median_idx], first_chunk_size * sizeof(kpoint), MPI_BYTE, 1, 0, MPI_COMM_WORLD);
+
+    free(aligned_dataset);
     
     if (root != NULL) {
       printf("root node is %f,%f\n", root->split.coords[0], root->split.coords[1]);
@@ -231,9 +246,6 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
     // printf("reached level %d, len is %d\n", level, len);
   }
 
-  // printf("y axis max: %f, min: %f\n", extremes[y_axis][1], extremes[y_axis][0]);
-  // printf("x axis max: %f, min: %f\n", extremes[x_axis][1], extremes[x_axis][0]);
-
   #pragma omp taskgroup
   {
     if (chosen_axis != previous_axis) {
@@ -281,7 +293,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
   if (current_level == final_level) {
     #pragma omp critical 
     {
-      printf("sending to mpi process %d, dataset chunk\n", counter);
+      printf("sending to mpi process %d, dataset chunk\n", counter); //TODO: counter is alway 0 :( make for out of method instead!!!
       MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
 
       kpoint *chunk = malloc(len * sizeof(kpoint));
