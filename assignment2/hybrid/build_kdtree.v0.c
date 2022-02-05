@@ -154,7 +154,7 @@ int main(int argc, char *argv[]) {
       copy_dataset_from_ptrs(aligned_dataset, dataset_ptrs, len);
 
       MPI_Send(&aligned_dataset[0], first_chunk_size * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD);
-      MPI_Send(&aligned_dataset[median_idx], first_chunk_size * sizeof(kpoint), MPI_BYTE, 1, 0, MPI_COMM_WORLD);
+      MPI_Send(&aligned_dataset[median_idx], second_chunk_size * sizeof(kpoint), MPI_BYTE, 1, 0, MPI_COMM_WORLD);
 
       free(aligned_dataset);
     
@@ -291,22 +291,22 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
 
 struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int current_level, int final_level, int counter) {
   if (current_level == final_level) {
-    #pragma omp critical 
-    {
-      printf("sending to mpi process %d, dataset chunk\n", counter); //TODO: counter is alway 0 :( make for out of method instead!!!
-      MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
-
-      kpoint *chunk = malloc(len * sizeof(kpoint));
-      copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
-      MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
- 
-      MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
-
-      MPI_Send(&previous_axis, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
-
-      free(chunk);
-      counter++;
-    }
+ //    #pragma omp critical 
+ //    {
+ //      printf("sending to mpi process %d, dataset chunk\n", counter); //TODO: counter is alway 0 :( make for out of method instead!!!
+ //      MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
+ //
+ //      kpoint *chunk = malloc(len * sizeof(kpoint));
+ //      copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
+ //      MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
+ // 
+ //      MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
+ //
+ //      MPI_Send(&previous_axis, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
+ //
+ //      free(chunk);
+ //      counter++;
+ //    }
     return NULL;
   }
 
