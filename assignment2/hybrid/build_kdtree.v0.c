@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     printf("starting pre-sorting..\n");
     #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len)
     {
-      #pragma omp single nowait
+      #pragma omp master
       {
         if(chosen_axis == x_axis) {
           pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
@@ -143,7 +143,7 @@ int main(int argc, char *argv[]) {
     
     #pragma omp parallel shared(dataset_ptrs, root) firstprivate(extremes, chosen_axis, len, final_level) 
     {
-      #pragma omp single nowait
+      #pragma omp master
       {
         int current_level = 0, counter = 0;
         root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, counter);
@@ -181,12 +181,13 @@ int main(int argc, char *argv[]) {
 
     #pragma omp parallel shared(recv_dataset_ptrs, chunk_root) firstprivate(recv_extremes, recv_axis, recv_len) 
     {
-      #pragma omp single nowait
+      #pragma omp master
       {
         int current_level = 0;
         chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len, recv_axis, current_level);
       }
     }
+
     printf("i am mpi process %d, my chunk root node is %f,%f\n", my_rank, chunk_root->split.coords[0], chunk_root->split.coords[1]);
     free(recv_dataset);
     free(recv_dataset_ptrs);
