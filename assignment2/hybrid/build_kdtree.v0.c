@@ -146,7 +146,6 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    printf("test here?\n");
     if (root != NULL) {
       printf("root node is %f,%f\n", root->split.coords[0], root->split.coords[1]);
     } else {
@@ -291,6 +290,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     MPI_Send(&previous_axis, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
 
     free(chunk);
+    printf("free chunk..\n");
     return NULL;
   }
 
