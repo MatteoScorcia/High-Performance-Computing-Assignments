@@ -128,7 +128,6 @@ int main(int argc, char *argv[]) {
     {
       #pragma omp single nowait
       {
-        printf("num of threads into pre-sorting %d\n", omp_get_num_threads());
         if(chosen_axis == x_axis) {
           pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
         } else {
@@ -190,15 +189,6 @@ int main(int argc, char *argv[]) {
     free(recv_dataset);
     free(recv_dataset_ptrs);
   } 
-
-  #pragma omp parallel shared(nthreads)
-  {
-    #pragma omp single
-    {
-      nthreads = omp_get_num_threads();
-      printf("I am mpi process %d an I have %d threads\n", my_rank, nthreads);
-    }
-  }
 
   double telapsed = CPU_TIME - tstart;
   
@@ -282,7 +272,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
 struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int current_level, int final_level, int counter) {
   if ((current_level == final_level) && (counter != 0)) {
 
-    printf("sending to mpi process %d, len %d\n", counter, len); //TODO: works only for numprocs = 2 for now 
+    printf("sent chunk_length from mpi process 0 to mpi process %d, len %d\n", counter, len); //TODO: works only for numprocs = 2 for now 
     MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
 
     kpoint *chunk = malloc(len * sizeof(kpoint));
@@ -292,7 +282,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
     MPI_Send(&previous_axis, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
 
-    printf("sent chunk from mpi process 0, to mpi process %d\n", counter);
+    printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n", omp_get_thread_num(), counter);
 
     free(chunk);
     return NULL;
@@ -311,10 +301,6 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
   struct kdnode *node = malloc(sizeof(struct kdnode));
 
   int chosen_axis = choose_splitting_dimension(extremes);
-
-  if((current_level >= 0) && (current_level <= 3)) {
-    printf("reached level %d, len is %d\n", current_level, len);
-  }
 
   #pragma omp taskgroup
   {
