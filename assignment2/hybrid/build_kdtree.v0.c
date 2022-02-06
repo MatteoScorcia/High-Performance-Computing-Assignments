@@ -280,12 +280,12 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     printf("sending to mpi process %d, chunk\n", counter);
     MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
 
+    printf("finished send chunk !\n");
     MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
 
     MPI_Send(&previous_axis, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
 
     free(chunk);
-    printf("finished send !\n", counter, len);
     return NULL;
   }
 
