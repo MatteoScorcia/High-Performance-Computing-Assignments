@@ -128,6 +128,7 @@ int main(int argc, char *argv[]) {
     {
       #pragma omp single nowait
       {
+        printf("num of threads into pre-sorting %d\n", omp_get_num_threads());
         if(chosen_axis == x_axis) {
           pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
         } else {
@@ -190,6 +191,14 @@ int main(int argc, char *argv[]) {
     free(recv_dataset_ptrs);
   } 
 
+  #pragma omp parallel shared(nthreads)
+  {
+    #pragma omp single
+    {
+      nthreads = omp_get_num_threads();
+      printf("I am mpi process %d an I have %d threads\n", my_rank, nthreads);
+    }
+  }
 
   double telapsed = CPU_TIME - tstart;
   
