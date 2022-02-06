@@ -148,6 +148,7 @@ kpoint *generate_dataset(int len) {
 #define build_cutoff 128
 
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int level) {
+  printf("build called by thread %d\n", omp_get_thread_num());
   if (len == 1) {
     struct kdnode *leaf = malloc(sizeof(struct kdnode));
     leaf->axis = previous_axis;
