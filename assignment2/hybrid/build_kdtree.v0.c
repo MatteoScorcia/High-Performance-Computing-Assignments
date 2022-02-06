@@ -81,6 +81,7 @@ int main(int argc, char *argv[]) {
 
   tstart = CPU_TIME;
 
+  omp_set_num_threads(16);
   #pragma omp parallel shared(nthreads)
   {
     #pragma omp single
