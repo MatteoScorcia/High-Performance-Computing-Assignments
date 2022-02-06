@@ -158,7 +158,6 @@ int main(int argc, char *argv[]) {
 
   int recv_len;
   MPI_Status status;
-  printf("i am mpi process %d, receiving len..\n", my_rank);
   MPI_Recv(&recv_len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
   
   kpoint *recv_dataset = malloc(len * sizeof(kpoint));
@@ -273,11 +272,12 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
 struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int current_level, int final_level, int counter) {
   if (current_level == final_level) {
 
-    printf("sending to mpi process %d, dataset chunk\n", counter); //TODO: works only for numprocs = 2 for now 
+    printf("sending to mpi process %d, len %d\n", counter, len); //TODO: works only for numprocs = 2 for now 
     MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
 
     kpoint *chunk = malloc(len * sizeof(kpoint));
     copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
+    printf("sending to mpi process %d, chunk\n", counter);
     MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
 
     MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
@@ -285,7 +285,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     MPI_Send(&previous_axis, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
 
     free(chunk);
-
+    printf("finished send !\n", counter, len);
     return NULL;
   }
 
