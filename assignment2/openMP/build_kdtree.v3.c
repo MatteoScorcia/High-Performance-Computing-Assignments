@@ -129,7 +129,7 @@ int main(int argc, char *argv[]) {
 
   printf("elapsed time: %f\n", telapsed);
 
-  // free(dataset);
+  free(dataset);
   free(dataset_ptrs);
   return 0;
 }
@@ -162,9 +162,9 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
 
   int chosen_axis = choose_splitting_dimension(extremes);
 
-  if((level >= 0) && (level <= 3)) {
-    printf("reached level %d, len is %d\n", level, len);
-  }
+  // if((level >= 0) && (level <= 3)) {
+  //   printf("reached level %d, len is %d\n", level, len);
+  // }
 
   // printf("y axis max: %f, min: %f\n", extremes[y_axis][1], extremes[y_axis][0]);
   // printf("x axis max: %f, min: %f\n", extremes[x_axis][1], extremes[x_axis][0]);

@@ -121,7 +121,8 @@ int main(int argc, char *argv[]) {
     get_dataset_extremes(dataset_ptrs, extremes, len, y_axis);
    
     int chosen_axis = choose_splitting_dimension(extremes);
-
+    
+    double sort_start = CPU_TIME;
     printf("starting pre-sorting..\n");
     #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len)
     {
@@ -134,10 +135,10 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-    printf("pre-sorting done!\n");
+    printf("pre-sorting done in %f [s]\n", CPU_TIME - sort_start);
 
     int final_level = log2(numprocs);
-
+    
     #pragma omp parallel shared(dataset_ptrs, root) firstprivate(extremes, chosen_axis, len, final_level) 
     {
       #pragma omp single nowait
