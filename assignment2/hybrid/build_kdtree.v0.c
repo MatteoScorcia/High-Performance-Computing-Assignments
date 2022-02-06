@@ -90,51 +90,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (argc == 2 ) {
-    len = atoi(argv[1]);
-  } else if (argc == 1){
-    len = 100000000;
-  } else {
-    return 1;
-  }
-
-  kpoint *dataset = generate_dataset(len);
-
-  printf("len: %d\n", len);
-
-  kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
-  get_dataset_ptrs(dataset, dataset_ptrs, len);
-
-  struct kdnode *root;
-
-  tstart = CPU_TIME;
-
-  printf("choosing splitting dimension..\n");
-  
-  float_t extremes[NDIM][2]; //min_value (index 0) and max value (index 1) in each dimension NDIM
-
-  get_dataset_extremes(dataset_ptrs, extremes, len, x_axis);
-  get_dataset_extremes(dataset_ptrs, extremes, len, y_axis);
- 
-  int chosen_axis = choose_splitting_dimension(extremes);
-  
-  double sort_start = CPU_TIME;
-  printf("starting pre-sorting..\n");
-  #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len)
-  {
-    #pragma omp master
-    {
-      if(chosen_axis == x_axis) {
-        pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
-      } else {
-        pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_ge_y_axis);
-      }
-    }
-  }
-  printf("pre-sorting done in %f [s]\n", CPU_TIME - sort_start);
-
-
-
   if (my_rank == 0) {
     // kpoint dataset[16] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
     //                      {8, 1}, {7, 2}, {8, 9}, {1, 1}, {0.55, 6},

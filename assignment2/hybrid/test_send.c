@@ -35,6 +35,10 @@ int main(int argc, char *argv[])
                        {8, 1}, {7, 2}, {8, 9}, {1, 1}};
   int len = sizeof(dataset) / sizeof(dataset[0]);
 
+  kpoint extremes[2] = {{1,9}, {1,22}};
+
+  kpoint computed_median = {5, 11};
+
   #pragma omp parallel 
   {
     #pragma omp single 
@@ -52,6 +56,22 @@ int main(int argc, char *argv[])
     MPI_Status status;
     MPI_Recv(&received, 4, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &status);
     printf("received: %f,%f and %f,%f\n", received[0].coords[0], received[0].coords[1], received[1].coords[0], received[1].coords[1]);
+  }
+
+  if (my_rank == 0) {
+    printf("test parallel for...\n");
+    kpoint res;
+    kpoint current_median;
+    int current_median_idx;
+
+    #pragma omp parallel for implicit(none) shared(dataset, res, computed_median, current_median) schedule(static)
+    for (int i = 0; i < len; i++) {
+      if (abs(dataset[i].coords[0] - computed_median.coords[0]) < abs(dataset[i].coords[0] - current_median.coords[0])) {
+        current_median = dataset[i];
+        current_median_idx = i;
+      }
+    }
+    printf("median for x axis of whole dataset is %f, index is %d\n", current_median.coords[0], current_median_idx);
   }
 
 	MPI_Finalize();
