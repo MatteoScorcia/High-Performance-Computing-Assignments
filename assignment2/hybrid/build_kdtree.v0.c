@@ -160,10 +160,12 @@ int main(int argc, char *argv[]) {
   MPI_Status status;
   MPI_Recv(&recv_len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
   
-  kpoint *recv_dataset = malloc(len * sizeof(kpoint));
-  MPI_Recv(recv_dataset, len * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+  printf("received len %d\n", recv_len);
 
-  kpoint **recv_dataset_ptrs = malloc(len * sizeof(kpoint *));
+  kpoint *recv_dataset = malloc(recv_len * sizeof(kpoint));
+  MPI_Recv(recv_dataset, recv_len * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
+
+  kpoint **recv_dataset_ptrs = malloc(recv_len * sizeof(kpoint *));
   get_dataset_ptrs(recv_dataset, recv_dataset_ptrs, recv_len);
   
   float_t recv_extremes[NDIM][2] = {};
