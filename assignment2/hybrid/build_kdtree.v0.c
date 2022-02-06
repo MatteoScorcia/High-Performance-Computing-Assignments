@@ -490,6 +490,8 @@ void pqsort(kpoint **data, int start, int end,
             int (*comparator)(const void *, const void *), int(*comparator_insort)(const void *, const void *)) {
   int size = end - start;
 
+  printf("qsort by thread %d\n", omp_get_num_threads());
+
   switch (size) {
   case 1:
     break;
