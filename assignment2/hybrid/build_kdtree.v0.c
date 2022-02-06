@@ -290,7 +290,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     MPI_Send(&previous_axis, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
 
     free(chunk);
-    printf("free chunk..\n");
+    printf("free chunk.., counter is %d\n", counter);
     return NULL;
   }
 
