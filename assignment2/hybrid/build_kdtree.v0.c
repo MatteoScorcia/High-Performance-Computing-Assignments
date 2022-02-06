@@ -67,6 +67,7 @@ int main(int argc, char *argv[]) {
   struct timespec ts;
   double tstart;
   int len;
+  int nthreads;
 
 	int numprocs;
   int *provided = malloc(sizeof(int *));
@@ -77,6 +78,15 @@ int main(int argc, char *argv[]) {
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
   tstart = CPU_TIME;
+
+  #pragma omp parallel shared(nthreads)
+  {
+    #pragma omp single
+    {
+      nthreads = omp_get_num_threads();
+      printf("I am mpi process %d an I have %d threads\n", my_rank, nthreads);
+    }
+  }
 
   if (my_rank == 0) {
     // kpoint dataset[16] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
@@ -99,18 +109,9 @@ int main(int argc, char *argv[]) {
     kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
     get_dataset_ptrs(dataset, dataset_ptrs, len);
 
-    int nthreads;
     struct kdnode *root;
 
     tstart = CPU_TIME;
-    #pragma omp parallel shared(nthreads)
-    {
-      #pragma omp single
-      {
-        nthreads = omp_get_num_threads();
-        printf("num threads: %d\n", nthreads);
-      }
-    }
 
     printf("choosing splitting dimension..\n");
     
@@ -147,21 +148,16 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    if (root != NULL) {
-      printf("root node is %f,%f\n", root->split.coords[0], root->split.coords[1]);
-    } else {
-      printf("root node is NULL\n");
-    }
+    printf("mpi process %d has root node is %f,%f\n", my_rank, root->split.coords[0], root->split.coords[1]);
 
     free(dataset);
     free(dataset_ptrs);
   } else {
     int recv_len;
     MPI_Status status;
-    printf("process %d waiting for len..\n", my_rank);
+
     MPI_Recv(&recv_len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-    
-    printf("received len %d\n", recv_len);
+    printf("mpi process %d received len %d\n", my_rank,  recv_len);
 
     kpoint *recv_dataset = malloc(recv_len * sizeof(kpoint));
     MPI_Recv(recv_dataset, recv_len * sizeof(kpoint), MPI_BYTE, 0, 0, MPI_COMM_WORLD, &status);
@@ -282,13 +278,11 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     kpoint *chunk = malloc(len * sizeof(kpoint));
     copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
 
-    printf("sending to mpi process %d, chunk\n", counter);
     MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
-    printf("finished send chunk, counter is %d\n", counter);
-
     MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
-
     MPI_Send(&previous_axis, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
+
+    printf("sent chunk from mpi process 0, to mpi process %d\n", counter);
 
     free(chunk);
     return NULL;
