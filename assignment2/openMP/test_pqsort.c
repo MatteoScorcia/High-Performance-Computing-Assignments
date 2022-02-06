@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 
   struct timespec ts;
 
-  int len = 80000000;
+  int len = 800000;
   kpoint *dataset = generate_dataset(len);
 
   kpoint **dataset_ptrs = malloc(len * sizeof(kpoint *));
