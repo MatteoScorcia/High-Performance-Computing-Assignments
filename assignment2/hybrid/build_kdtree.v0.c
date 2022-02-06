@@ -146,6 +146,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
+    printf("test here?\n");
     if (root != NULL) {
       printf("root node is %f,%f\n", root->split.coords[0], root->split.coords[1]);
     } else {
