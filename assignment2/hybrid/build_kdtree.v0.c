@@ -81,7 +81,6 @@ int main(int argc, char *argv[]) {
 
   tstart = CPU_TIME;
 
-  omp_set_num_threads(16);
   #pragma omp parallel shared(nthreads)
   {
     #pragma omp single
@@ -215,6 +214,7 @@ kpoint *generate_dataset(int len) {
 #define build_cutoff 128
 
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int level) {
+  printf("build called by thread %d\n", omp_get_thread_num());
   if (len == 1) {
     struct kdnode *leaf = malloc(sizeof(struct kdnode));
     leaf->axis = previous_axis;
@@ -273,6 +273,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
 }
 
 struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int current_level, int final_level, int counter) {
+  printf("build called by thread %d\n", omp_get_thread_num());
   if ((current_level == final_level) && (counter != 0)) {
 
     printf("sent chunk_length from mpi process 0 to mpi process %d, len %d\n", counter, len); //TODO: works only for numprocs = 2 for now 
