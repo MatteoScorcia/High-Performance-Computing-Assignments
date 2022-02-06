@@ -278,7 +278,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     kpoint *chunk = malloc(len * sizeof(kpoint));
     copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
     printf("sending to mpi process %d, chunk\n", counter);
-    // MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
+    MPI_Isend(chunk, len * sizeof(kpoint), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
 
     printf("finished send chunk !\n");
     MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
