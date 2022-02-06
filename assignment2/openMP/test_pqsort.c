@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <mpi.h>
 
 #if defined(_OPENMP)
 #define CPU_TIME                                                               \
@@ -61,6 +62,15 @@ int cmp_double(const void *a, const void *b);
 int main(int argc, char *argv[]) {
 
   struct timespec ts;
+
+  int numprocs;
+  int *provided = malloc(sizeof(int *));
+	MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, provided);
+	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+
+	int my_rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+
 
   int len = 800000;
   kpoint *dataset = generate_dataset(len);
@@ -240,7 +250,7 @@ void pqsort(kpoint **data, int start, int end,
             int (*comparator)(const void *, const void *)) {
   int size = end - start;
 
-  // printf("qsort by thread %d\n", omp_get_thread_num());
+  printf("qsort by thread %d\n", omp_get_thread_num());
 
   if (size == 1) {
     return;
