@@ -194,7 +194,6 @@ int main(int argc, char *argv[]) {
   } 
 
   double telapsed = CPU_TIME - tstart;
-  
   printf("elapsed time of mpi process %d: %f\n", my_rank, telapsed);
 
 	MPI_Finalize();
