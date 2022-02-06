@@ -240,7 +240,7 @@ void pqsort(kpoint **data, int start, int end,
             int (*comparator)(const void *, const void *)) {
   int size = end - start;
 
-  printf("qsort by thread %d\n", omp_get_thread_num());
+  // printf("qsort by thread %d\n", omp_get_thread_num());
 
   if (size == 1) {
     return;

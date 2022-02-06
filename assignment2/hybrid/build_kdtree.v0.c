@@ -77,6 +77,8 @@ int main(int argc, char *argv[]) {
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
+  printf("print provided %d\n", *provided);
+
   tstart = CPU_TIME;
 
   #pragma omp parallel shared(nthreads)
