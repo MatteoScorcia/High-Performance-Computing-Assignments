@@ -5,6 +5,7 @@
 #include <time.h>
 #include <string.h>
 #include <omp.h>
+#include <math.h>
 
 #if !defined(DOUBLE_PRECISION)
 #define float_t float
@@ -65,12 +66,13 @@ int main(int argc, char *argv[])
 
     #pragma omp parallel for shared(dataset, computed_median, current_median) schedule(static) proc_bind(close)
     for (int i = 1; i < len; i++) {
-      if (abs(dataset[i].coords[1] - computed_median.coords[1]) < abs(dataset[i].coords[1] - current_median.coords[1])) {
+      if (fabs(dataset[i].coords[1] - computed_median.coords[1]) < fabs(dataset[i].coords[1] - current_median.coords[1])) {
+        printf("|%f - %f| = %f \n", dataset[i].coords[1],  computed_median.coords[1], fabs(dataset[i].coords[1] - computed_median.coords[1]));
         current_median = dataset[i];
         current_median_idx = i;
       }
     }
-    printf("median for x axis of whole dataset is %f, index is %d\n", current_median.coords[1], current_median_idx);
+    printf("median for y axis of whole dataset is %f, index is %d\n", current_median.coords[1], current_median_idx);
   }
 
 	MPI_Finalize();
