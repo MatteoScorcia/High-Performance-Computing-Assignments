@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 
   if (my_rank == 0) {
     printf("test parallel for...\n");
-    kpoint current_median = dataset[i].coords[1];
+    kpoint current_median = dataset[0];
     int current_median_idx = 0;
 
     #pragma omp parallel for shared(dataset, computed_median, current_median) schedule(static) proc_bind(close)
