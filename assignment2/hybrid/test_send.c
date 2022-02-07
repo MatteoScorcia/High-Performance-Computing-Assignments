@@ -75,9 +75,9 @@ int main(int argc, char *argv[])
     #pragma omp declare reduction(minimum : struct Compare : omp_out = omp_in.val < omp_out.val ? omp_in : omp_out)\
                           initializer(omp_priv = {100, 0})
    
-    struct Compare min_distance = {50, 0};
-    // min_distance.val = 101;
-    // min_distance.index = 0;
+    struct Compare min_distance = {};
+    min_distance.val = 50;
+    min_distance.index = 0;
 
     #pragma omp parallel for shared(distances) reduction(minimum:min_distance) schedule(static) proc_bind(close)
       for (int i = 0; i < len; i++) {
