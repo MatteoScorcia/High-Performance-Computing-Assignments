@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
   }
 
   if (my_rank == 0) {
-    printf("test parallel for...\n");
+    printf("test parallel for... len is %d\n", len);
     kpoint current_median = dataset[0];
     int current_median_idx = 0;
 
