@@ -299,8 +299,8 @@ int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, 
 
   #pragma omp parallel for shared(dataset, distances) firstprivate(computed_median, chosen_axis) schedule(static) proc_bind(close)
     for (int i = 0; i < len; i++) {
-      printf("distances[%d] = %f \n", i, distances[i]);
       distances[i] = fabs(dataset[i].coords[chosen_axis] - computed_median);
+      printf("distances[%d] = %f \n", i, distances[i]);
     }
 
     struct Compare { float_t val; int index; };    
