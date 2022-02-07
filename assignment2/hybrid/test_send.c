@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
         distances[i] = fabs(dataset[i].coords[0] - computed_median.coords[0]);
       }
 
-    printf("distance[3] = %f\n", distances[3]);
+    printf("distance[4] = %f\n", distances[4]);
 
   //   #pragma omp parallel for shared(dataset, computed_median, current_median) schedule(static) proc_bind(close)
   //   for (int i = 1; i < len; i++) {
