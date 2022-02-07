@@ -118,8 +118,8 @@ void get_chunk_sizes(int dataset_len, int *results, int results_len, int final_l
     return;
   }
 
-  get_chunk_sizes(len_left, results, final_level, level+1);
-  get_chunk_sizes(len_right, results, final_level, level+1);
+  get_chunk_sizes(len_left, results, results_len, final_level, level+1);
+  get_chunk_sizes(len_right, results, results_len, final_level, level+1);
 }
 
 kpoint *generate_dataset(int len) {
