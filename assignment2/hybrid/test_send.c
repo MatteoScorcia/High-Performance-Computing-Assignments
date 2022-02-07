@@ -49,16 +49,16 @@ int main(int argc, char *argv[])
     }
   }
 
-  if (my_rank == 0) {
-    MPI_Send(&dataset[2], 4, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
-  }
-
-  if (my_rank == 1) {
-    kpoint received[2];
-    MPI_Status status;
-    MPI_Recv(&received, 4, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &status);
-    printf("received: %f,%f and %f,%f\n", received[0].coords[0], received[0].coords[1], received[1].coords[0], received[1].coords[1]);
-  }
+  // if (my_rank == 0) {
+  //   MPI_Send(&dataset[2], 4, MPI_DOUBLE, 1, 0, MPI_COMM_WORLD);
+  // }
+  //
+  // if (my_rank == 1) {
+  //   kpoint received[2];
+  //   MPI_Status status;
+  //   MPI_Recv(&received, 4, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &status);
+  //   printf("received: %f,%f and %f,%f\n", received[0].coords[0], received[0].coords[1], received[1].coords[0], received[1].coords[1]);
+  // }
 
   if (my_rank == 0) {
     printf("test parallel for...\n");
