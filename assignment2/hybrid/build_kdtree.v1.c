@@ -113,13 +113,14 @@ int main(int argc, char *argv[]) {
     
     int final_level = log2(numprocs);
     
+    printf("start building kdtree..\n");
     #pragma omp parallel shared(dataset, root) firstprivate(extremes, chosen_axis, len, final_level) 
     {
       #pragma omp master
       {
         int current_level = 0, counter = 0;
         root = build_kdtree_until_level_then_scatter(dataset, extremes, len, chosen_axis, current_level, final_level, counter);
-        printf("finished build kd_tree until level %d\n", final_level);
+        printf("finished build kd_tree on process %d \n", my_rank);
       }
     }
 
