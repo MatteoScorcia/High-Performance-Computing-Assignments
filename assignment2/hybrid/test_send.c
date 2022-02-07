@@ -80,6 +80,7 @@ int main(int argc, char *argv[])
 
     #pragma omp parallel for shared(distances) reduction(minimum:min_distance) schedule(static) proc_bind(close)
       for (int i = 1; i < len; i++) {
+        printf("distances[%d]: %f, min_distance.val: %f\n", i, distances[i], min_distance.val);
         if (distances[i] < min_distance.val) {
           min_distance.val = distances[i];
           min_distance.index = i;
