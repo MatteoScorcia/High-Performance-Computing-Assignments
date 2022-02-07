@@ -77,7 +77,8 @@ int main(int argc, char *argv[])
     struct Compare min_distance;
     min_distance.val = distances[0];
     min_distance.index = 0;
-    #pragma omp parallel for shared(distances) reduction(minimum:min_distance) schedule(static) proc_bind(close)
+
+    #pragma omp parallel for reduction(minimum:min_distance) schedule(static) proc_bind(close)
       for (int i = 1; i < len; i++) {
         if (distances[i] < min_distance.val) {
           min_distance.val = distances[i];
