@@ -60,17 +60,16 @@ int main(int argc, char *argv[])
 
   if (my_rank == 0) {
     printf("test parallel for...\n");
-    kpoint current_median;
-    int current_median_idx;
+    kpoint current_median = dataset[i].coords[1];
+    int current_median_idx = 0;
 
     #pragma omp parallel for shared(dataset, computed_median, current_median) schedule(static) proc_bind(close)
-    for (int i = 0; i < len; i++) {
+    for (int i = 1; i < len; i++) {
       if (abs(dataset[i].coords[1] - computed_median.coords[1]) < abs(dataset[i].coords[1] - current_median.coords[1])) {
         current_median = dataset[i];
         current_median_idx = i;
       }
     }
-    printf("computed median is %f\n", computed_median);
     printf("median for x axis of whole dataset is %f, index is %d\n", current_median.coords[1], current_median_idx);
   }
 
