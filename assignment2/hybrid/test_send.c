@@ -71,17 +71,20 @@ int main(int argc, char *argv[])
         printf("distances[%d] = %f \n", i, distances[i]);
       }
 
-    int median_idx = 0;
-    float_t min_distance = distances[0];
-    #pragma omp parallel for shared(distances, median_idx) reduction(min:min_distance) schedule(static) proc_bind(close)
+    struct Compare { float_t val; int index; };    
+    #pragma omp declare reduction(minimum : struct Compare : omp_out = omp_in.val < omp_out.val ? omp_in : omp_out)
+
+    struct Compare min_distance;
+    min_distance.val = distances[0];
+    min_distance.index = 0;
+    #pragma omp parallel for shared(distances) reduction(minimum:min_distance) schedule(static) proc_bind(close)
       for (int i = 1; i < len; i++) {
-        printf("min_distance is %f\n", min_distance);
-        if (min_distance > distances[i]) {
-          min_distance = distances[i];
-          median_idx = i;
+        if (distances[i] < min_distance.val) {
+          min_distance.val = distances[i];
+          min_distance.index = i;
         }
       }
-      printf("median for x axis of whole dataset is %f, index is %d, distance is %f\n", dataset[median_idx].coords[0], median_idx, min_distance);
+      printf("median for x axis of whole dataset is %f, index is %d, distance is %f\n", dataset[min_distance.index].coords[0], min_distance.index, min_distance.val);
   }
 
 	MPI_Finalize();
