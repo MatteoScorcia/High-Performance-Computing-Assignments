@@ -72,7 +72,8 @@ int main(int argc, char *argv[])
       }
 
     struct Compare { float_t val; int index; };    
-    // #pragma omp declare reduction(minimum : struct Compare : omp_out = omp_in.val < omp_out.val ? omp_in : omp_out)
+    #pragma omp declare reduction(minimum : struct Compare : omp_out = omp_in.val < omp_out.val ? omp_in : omp_out)\
+                          initializer(omp_priv = {0, 1000})
    
     struct Compare min_distance;
     min_distance.val = distances[0];
