@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
   //     }
   //   }
   //   printf("median for y axis of whole dataset is %f, index is %d\n", current_median.coords[1], current_median_idx);
-  // }
+  }
 
 	MPI_Finalize();
 	return 0;
