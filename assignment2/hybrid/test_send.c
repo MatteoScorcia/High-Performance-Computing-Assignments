@@ -60,29 +60,24 @@ int main(int argc, char *argv[])
   }
 
   if (my_rank == 0) {
-    printf("test parallel for... len is %d\n", len);
+    printf("test parallel for...\n");
     kpoint current_median = dataset[0];
     int current_median_idx = 0;
      
     float_t distances[len];
-    #pragma omp parallel for shared(dataset) firstprivate(computed_median) lastprivate(distances) schedule(static) proc_bind(close)
+    #pragma omp parallel for shared(dataset, distances) firstprivate(computed_median) schedule(static) proc_bind(close)
       for (int i = 0; i < len; i++) {
         printf("fabs(dataset[%d].coords[0] - computed_median.coords[0]) = fabs(%f - %f)\n", i, dataset[i].coords[0], computed_median.coords[0]);
         distances[i] = fabs(dataset[i].coords[0] - computed_median.coords[0]);
       }
 
-    printf("distance[5] = %f\n", distances[5]);
-
-  //   #pragma omp parallel for shared(dataset, computed_median, current_median) schedule(static) proc_bind(close)
-  //   for (int i = 1; i < len; i++) {
-  //     #pragma omp critical
-  //     if (fabs(dataset[i].coords[1] - computed_median.coords[1]) < fabs(dataset[i].coords[1] - current_median.coords[1])) {
-  //       printf("|%f[%d] - %f| = %f \n", dataset[i].coords[1], i,  computed_median.coords[1], fabs(dataset[i].coords[1] - computed_median.coords[1]));
-  //       current_median = dataset[i];
-  //       current_median_idx = i;
-  //     }
-  //   }
-  //   printf("median for y axis of whole dataset is %f, index is %d\n", current_median.coords[1], current_median_idx);
+    int median_idx = 0;
+    float_t min_distance = distances[0];
+    #pragma omp parallel for shared(distances, min_distance) reduction(min:min_distance) schedule(static) proc_bind(close)
+      for (int i = 0; i < len; i++) {
+        min_distance < distances[i] ?  : (min_distance = distances[i], median_idx=i);
+      }
+      printf("median for y axis of whole dataset is %f, index is %d\n", dataset[median_idx].coords[0], median_idx);
   }
 
 	MPI_Finalize();
