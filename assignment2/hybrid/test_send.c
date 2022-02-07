@@ -73,9 +73,13 @@ int main(int argc, char *argv[])
 
     int median_idx = 0;
     float_t min_distance = distances[0];
-    #pragma omp parallel for shared(distances) reduction(min:min_distance) schedule(static) proc_bind(close)
+    printf("distances[0] is %f\n", distances[0]);
+    #pragma omp parallel for shared(distances, median_idx) reduction(min:min_distance) schedule(static) proc_bind(close)
       for (int i = 0; i < len; i++) {
-        min_distance < distances[i] ?  : (min_distance = distances[i], median_idx=i);
+        if (min_distance > distances[i]) {
+          min_distance = distances[i];
+          median_idx = i;
+        }
       }
       printf("median for x axis of whole dataset is %f, index is %d, distance is %f\n", dataset[median_idx].coords[0], median_idx, min_distance);
   }
