@@ -109,6 +109,7 @@ void get_chunk_sizes(int dataset_len, int *results, int final_level, int level, 
   printf("median is %d, level is %d\n", median, level);
 
   if(level == final_level) {
+    printf("counter in final level %d\n", counter);
     results[counter] = dataset_len;
     counter++;
     return;
