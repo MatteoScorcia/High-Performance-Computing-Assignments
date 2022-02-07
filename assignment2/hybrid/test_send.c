@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 
     int median_idx = 0;
     float_t min_distance = distances[0];
-    #pragma omp parallel for shared(distances, min_distance) reduction(min:min_distance) schedule(static) proc_bind(close)
+    #pragma omp parallel for shared(distances) reduction(min:min_distance) schedule(static) proc_bind(close)
       for (int i = 0; i < len; i++) {
         min_distance < distances[i] ?  : (min_distance = distances[i], median_idx=i);
       }
