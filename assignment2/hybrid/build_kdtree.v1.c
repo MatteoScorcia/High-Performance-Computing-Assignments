@@ -111,9 +111,6 @@ int main(int argc, char *argv[]) {
    
     int chosen_axis = choose_splitting_dimension(extremes);
    
-    int try = choose_splitting_point(dataset, extremes, len, chosen_axis);
-    printf("print test: %d\n", try);
-
     int final_level = log2(numprocs);
     
     printf("start building kdtree..\n");
@@ -122,7 +119,7 @@ int main(int argc, char *argv[]) {
       #pragma omp master
       {
         int current_level = 0, counter = 0;
-        // root = build_kdtree_until_level_then_scatter(dataset, extremes, len, chosen_axis, current_level, final_level, counter);
+        root = build_kdtree_until_level_then_scatter(dataset, extremes, len, chosen_axis, current_level, final_level, counter);
         printf("finished build kd_tree on process %d \n", my_rank);
       }
     }
@@ -264,9 +261,15 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
 
   int chosen_axis = choose_splitting_dimension(extremes);
 
+  printf("x coord of dataset[0] is %f\n", dataset[0].coords[0]);
   int median_idx = choose_splitting_point(dataset, extremes, len, chosen_axis);
   
   printf("median_idx is %d\n", median_idx);
+
+  if (median_idx == 0 ) {
+    printf("error \n");
+    return NULL;
+  }
 
   node->axis = chosen_axis;
   node->split = dataset[median_idx];
