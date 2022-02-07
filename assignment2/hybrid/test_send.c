@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
       for (int i = 0; i < len; i++) {
         min_distance < distances[i] ?  : (min_distance = distances[i], median_idx=i);
       }
-      printf("median for y axis of whole dataset is %f, index is %d\n", dataset[median_idx].coords[0], median_idx);
+      printf("median for x axis of whole dataset is %f, index is %d, distance is %f\n", dataset[median_idx].coords[0], median_idx, min_distance);
   }
 
 	MPI_Finalize();
