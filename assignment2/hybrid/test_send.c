@@ -67,15 +67,15 @@ int main(int argc, char *argv[])
     float_t distances[len];
     #pragma omp parallel for shared(dataset, distances) firstprivate(computed_median) schedule(static) proc_bind(close)
       for (int i = 0; i < len; i++) {
-        printf("fabs(dataset[%d].coords[0] - computed_median.coords[0]) = fabs(%f - %f)\n", i, dataset[i].coords[0], computed_median.coords[0]);
         distances[i] = fabs(dataset[i].coords[0] - computed_median.coords[0]);
+        printf("distances[%d] = %f \n", i, distances[i]);
       }
 
     int median_idx = 0;
     float_t min_distance = distances[0];
-    printf("distances[0] is %f\n", distances[0]);
     #pragma omp parallel for shared(distances, median_idx) reduction(min:min_distance) schedule(static) proc_bind(close)
-      for (int i = 0; i < len; i++) {
+      for (int i = 1; i < len; i++) {
+        printf("min_distance is %f\n", min_distance);
         if (min_distance > distances[i]) {
           min_distance = distances[i];
           median_idx = i;
