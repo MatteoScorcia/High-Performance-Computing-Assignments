@@ -70,6 +70,7 @@ int main(int argc, char *argv[])
         current_median_idx = i;
       }
     }
+    printf("computed median is %f\n", computed_median);
     printf("median for x axis of whole dataset is %f, index is %d\n", current_median.coords[1], current_median_idx);
   }
 
