@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
     
     int final_level = log2(numprocs);
     
-    #pragma omp parallel shared(dataset_ptrs, root) firstprivate(extremes, chosen_axis, len, final_level) 
+    #pragma omp parallel shared(dataset, root) firstprivate(extremes, chosen_axis, len, final_level) 
     {
       #pragma omp master
       {
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
     
     printf("i am mpi process %d, start building my kd-tree..\n", my_rank);
 
-    #pragma omp parallel shared(recv_dataset_ptrs, chunk_root) firstprivate(recv_extremes, recv_axis, recv_len) 
+    #pragma omp parallel shared(recv_dataset, chunk_root) firstprivate(recv_extremes, recv_axis, recv_len) 
     {
       #pragma omp master
       {
