@@ -268,10 +268,10 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
 
   kpoint *left_points, *right_points;
 
-  int len_left = median_idx - 1;    // length of the left points
-  int len_right = len - median_idx; // length of the right points
+  int len_left = median_idx;    // length of the left points
+  int len_right = len - (median_idx + 1); // length of the right points
   
-  if (len_left > 0) {
+  if (len_left != 0) {
     left_points = &dataset[0];       // starting pointer of left_points
 
     extremes[chosen_axis][0] = dataset[0].coords[chosen_axis]; //min value of chosen axis for left points
@@ -280,14 +280,16 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
     #pragma omp task shared(left_points, counter) firstprivate(extremes, len_left, chosen_axis, current_level, final_level) if(len_left >= build_cutoff) mergeable untied
       node->left = build_kdtree_until_level_then_scatter(left_points, extremes, len_left, chosen_axis, current_level+1, final_level, counter+1);
   }
-
-  right_points = &dataset[median_idx]; // starting pointer of right_points
   
-  extremes[chosen_axis][0] = dataset[median_idx].coords[chosen_axis]; //min value of chosen axis for right points
-  extremes[chosen_axis][1] = dataset[len - 1].coords[chosen_axis]; //max value of chosen axis for right points
+  if(len_right != 0) {
+    right_points = &dataset[median_idx]; // starting pointer of right_points
 
-  #pragma omp task shared(right_points, counter) firstprivate(extremes, len_right, chosen_axis, current_level, final_level) if(len_right >= build_cutoff) mergeable untied
-    node->right = build_kdtree_until_level_then_scatter(right_points, extremes, len_right, chosen_axis, current_level+1, final_level, counter+0);
+    extremes[chosen_axis][0] = dataset[median_idx].coords[chosen_axis]; //min value of chosen axis for right points
+    extremes[chosen_axis][1] = dataset[len - 1].coords[chosen_axis]; //max value of chosen axis for right points
+
+    #pragma omp task shared(right_points, counter) firstprivate(extremes, len_right, chosen_axis, current_level, final_level) if(len_right >= build_cutoff) mergeable untied
+      node->right = build_kdtree_until_level_then_scatter(right_points, extremes, len_right, chosen_axis, current_level+1, final_level, counter+0);
+  }
   
   #pragma omp taskwait
   return node;
@@ -296,7 +298,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
 int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, int chosen_axis) {
 
   float_t *distances = malloc(len * sizeof(float_t));
-  float_t computed_median = ceil((extremes[chosen_axis][1] + extremes[chosen_axis][0]) / 2.0);
+  float_t computed_median = (extremes[chosen_axis][1] + extremes[chosen_axis][0]) / 2.0;
 
   #pragma omp parallel for shared(dataset, distances) firstprivate(computed_median, chosen_axis) schedule(static) proc_bind(close)
     for (int i = 0; i < len; i++) {
