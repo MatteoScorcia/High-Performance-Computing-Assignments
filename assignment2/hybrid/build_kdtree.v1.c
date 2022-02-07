@@ -48,7 +48,7 @@ void copy_dataset(kpoint *dataset, kpoint *new_dataset, int len);
 struct kdnode *build_kdtree(kpoint *dataset, float_t extremes[NDIM][2], int len, int axis, int level);
 struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t extremes[NDIM][2], int len, int axis, int level, int final_level, int counter);
 int choose_splitting_dimension(float_t extremes[NDIM][2]);
-kpoint *choose_splitting_point(kpoint *dataset, int len, int chosen_axis);
+int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, int chosen_axis);
 void get_dataset_extremes(kpoint *dataset, float_t extremes[NDIM][2], int len, int axis);
 void copy_extremes(float_t old_extremes[NDIM][2], float_t new_extremes[NDIM][2]);
 
@@ -195,7 +195,7 @@ struct kdnode *build_kdtree(kpoint *dataset, float_t extremes[NDIM][2], int len,
 
   int chosen_axis = choose_splitting_dimension(extremes);
 
-  int median_idx = choose_splitting_point(dataset, len, chosen_axis);
+  int median_idx = choose_splitting_point(dataset, extremes, len, chosen_axis);
   node->axis = chosen_axis;
   node->split = dataset[median_idx];
 
@@ -260,7 +260,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
 
   int chosen_axis = choose_splitting_dimension(extremes);
 
-  int median_idx = choose_splitting_point(dataset, len, chosen_axis);
+  int median_idx = choose_splitting_point(dataset, extremes, len, chosen_axis);
   node->axis = chosen_axis;
   node->split = dataset[median_idx];
 
@@ -291,10 +291,30 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
   return node;
 }
 
-kpoint *choose_splitting_point(kpoint *dataset, int len,
-                               int chosen_axis) { //TODO: need to change in a parallel for..
-  int median_idx = ceil(len / 2.0) - 1;
-  return ordered_dataset[median_idx];
+int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, int chosen_axis) {
+
+  float_t *distances = malloc(len * sizeof(float_t));
+  float_t computed_median = (extremes[chosen_axis][1] + extremes[chosen_axis][0]) / 2.0;
+
+  #pragma omp parallel for shared(dataset, distances) firstprivate(computed_median) schedule(static) proc_bind(close)
+    for (int i = 0; i < len; i++) {
+      distances[i] = fabs(dataset[i].coords[0] - computed_median.coords[0]);
+    }
+
+    struct Compare { float_t val; int index; };    
+    struct Compare min_distance = {10, 0};
+    #pragma omp declare reduction(minimum : struct Compare : omp_out = omp_in.val < omp_out.val ? omp_in : omp_out)\
+                          initializer(omp_priv = {100, 0})
+   
+    #pragma omp parallel for shared(distances) reduction(minimum:min_distance) schedule(static) proc_bind(close)
+      for (int i = 0; i < len; i++) {
+        if (distances[i] < min_distance.val) {
+          min_distance.val = distances[i];
+          min_distance.index = i;
+        }
+      }
+
+  return min_distance.index;
 }
 
 int choose_splitting_dimension(float_t extremes[NDIM][2]) {
