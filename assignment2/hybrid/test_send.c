@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
       printf("min_distance index is %d, min_distance value is %f\n", min_distance.index, min_distance.val);
 
     int results[4] = {0, 0, 0, 0};
-    get_chunk_sizes(37, results, 2, 0, 0);
+    get_chunk_sizes(37, results, 4, 2, 0);
     printf("chunk sizes for len of 37, final level 2: %d %d %d %d\n", results[0], results[1], results[2], results[3]);
 
   }
