@@ -317,7 +317,8 @@ int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, 
           min_distance.index = i;
         }
       }
-
+  free(distances);
+  printf("min distance index: %d\n", min_distance.index);
   return min_distance.index;
 }
 
