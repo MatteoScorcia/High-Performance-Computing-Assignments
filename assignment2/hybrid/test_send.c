@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
       printf("min_distance index is %d, min_distance value is %f\n", min_distance.index, min_distance.val);
 
-    int results[4];
+    int results[4] = {0, 0, 0, 0};
     get_chunk_sizes(37, results, 2, 0, 0);
     printf("chunk sizes for len of 37, final level 2: %d %d %d %d\n", results[0], results[1], results[2], results[3]);
 
@@ -101,22 +101,25 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-void get_chunk_sizes(int dataset_len, int *results, int final_level, int level, int counter) {
+void get_chunk_sizes(int dataset_len, int *results, int results_len, int final_level, int level) {
   int median = ceil(dataset_len / 2.0);
   int len_left = median - 1;
   int len_right = dataset_len - median;
 
   printf("median is %d, level is %d\n", median, level);
 
-  if(level == final_level + 1) {
-    printf("counter in final level %d\n", counter);
-    results[counter] = dataset_len;
-    counter++;
+  if(level == final_level) {
+    for (int i = 0; i < results_len; i++) {
+      if (results[i] == 0) {
+        results[i] = dataset_len;
+        break;
+      }
+    }
     return;
   }
 
-  get_chunk_sizes(len_left, results, final_level, level+1, counter);
-  get_chunk_sizes(len_right, results, final_level, level+1, counter);
+  get_chunk_sizes(len_left, results, final_level, level+1);
+  get_chunk_sizes(len_right, results, final_level, level+1);
 }
 
 kpoint *generate_dataset(int len) {
