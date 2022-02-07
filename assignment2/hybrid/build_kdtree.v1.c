@@ -296,7 +296,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
 int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, int chosen_axis) {
 
   float_t *distances = malloc(len * sizeof(float_t));
-  float_t computed_median = (extremes[chosen_axis][1] + extremes[chosen_axis][0]) / 2.0;
+  float_t computed_median = ceil((extremes[chosen_axis][1] + extremes[chosen_axis][0]) / 2.0);
 
   #pragma omp parallel for shared(dataset, distances) firstprivate(computed_median, chosen_axis) schedule(static) proc_bind(close)
     for (int i = 0; i < len; i++) {
