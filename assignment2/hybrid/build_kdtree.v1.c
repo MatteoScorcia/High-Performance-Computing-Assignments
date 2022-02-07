@@ -262,6 +262,9 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
   int chosen_axis = choose_splitting_dimension(extremes);
 
   int median_idx = choose_splitting_point(dataset, extremes, len, chosen_axis);
+  
+  printf("median_idx is %d\n", median_idx);
+
   node->axis = chosen_axis;
   node->split = dataset[median_idx];
 
@@ -300,7 +303,6 @@ int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, 
   #pragma omp parallel for shared(dataset, distances) firstprivate(computed_median, chosen_axis) schedule(static) proc_bind(close)
     for (int i = 0; i < len; i++) {
       distances[i] = fabs(dataset[i].coords[chosen_axis] - computed_median);
-      printf("distances[%d] = %f \n", i, distances[i]);
     }
 
     struct Compare { float_t val; int index; };    
@@ -310,7 +312,6 @@ int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, 
    
     #pragma omp parallel for shared(distances) reduction(minimum:min_distance) schedule(static) proc_bind(close)
       for (int i = 0; i < len; i++) {
-        printf("distances[%d]: %f, min_distance.val: %f\n", i, distances[i], min_distance.val);
         if (distances[i] < min_distance.val) {
           min_distance.val = distances[i];
           min_distance.index = i;
