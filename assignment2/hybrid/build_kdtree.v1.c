@@ -256,7 +256,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
 
     return leaf;
   } else if(len < 1) {
-    return NULL:
+    return NULL;
   }
 
   struct kdnode *node = malloc(sizeof(struct kdnode));
