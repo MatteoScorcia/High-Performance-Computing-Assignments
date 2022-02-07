@@ -255,8 +255,6 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
     leaf->right = NULL;
 
     return leaf;
-  } else if(len < 1) {
-    return NULL;
   }
 
   struct kdnode *node = malloc(sizeof(struct kdnode));
@@ -273,7 +271,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
   int len_left = median_idx - 1;    // length of the left points
   int len_right = len - median_idx; // length of the right points
   
-  if (len_left != 0) {
+  if (len_left > 0) {
     left_points = &dataset[0];       // starting pointer of left_points
 
     extremes[chosen_axis][0] = dataset[0].coords[chosen_axis]; //min value of chosen axis for left points
