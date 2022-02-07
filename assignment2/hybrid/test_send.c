@@ -72,15 +72,15 @@ int main(int argc, char *argv[])
       }
 
     struct Compare { float_t val; int index; };    
-    #pragma omp declare reduction(minimum : struct Compare : omp_out = omp_in.val < omp_out.val ? omp_in : omp_out)
-                           // initializer(omp_priv = {100, 10})
+    #pragma omp declare reduction(minimum : struct Compare : omp_out = omp_in.val < omp_out.val ? omp_in : omp_out)\
+                          initializer(omp_priv = {100, 10})
    
     struct Compare min_distance = {10000, 10000};
     // min_distance.val = distances[0];
     // min_distance.index = 0;
 
     #pragma omp parallel for shared(distances) reduction(minimum:min_distance) schedule(static) proc_bind(close)
-      for (int i = 1; i < len; i++) {
+      for (int i = 0; i < len; i++) {
         printf("distances[%d]: %f, min_distance.val: %f\n", i, distances[i], min_distance.val);
         if (distances[i] < min_distance.val) {
           min_distance.val = distances[i];
