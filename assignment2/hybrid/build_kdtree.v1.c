@@ -204,6 +204,8 @@ struct kdnode *build_kdtree(kpoint *dataset, int len, int previous_axis) {
 
   int len_left = median_idx;    // length of the left points
   int len_right = len - (median_idx + 1); // length of the right points
+
+  printf("len_left: %d, len_right: %d\n", len_left, len_right);
   
   if (len_left != 0) {
     left_points = &dataset[0];       // starting pointer of left_points
@@ -268,7 +270,6 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, int len, i
   int len_left = median_idx;    // length of the left points
   int len_right = len - (median_idx + 1); // length of the right points
 
-  printf("len_left: %d, len_right: %d\n", len_left, len_right);
   
   if (len_left != 0) {
     left_points = &dataset[0];       // starting pointer of left_points
@@ -293,7 +294,7 @@ int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, 
   float_t *distances = malloc(len * sizeof(float_t));
   float_t computed_mean = (extremes[chosen_axis][1] + extremes[chosen_axis][0]) / 2.0;
 
-  #pragma omp parallel for shared(dataset, distances) firstprivate(computed_median, chosen_axis) schedule(static) proc_bind(close)
+  #pragma omp parallel for shared(dataset, distances) firstprivate(computed_mean, chosen_axis) schedule(static) proc_bind(close)
     for (int i = 0; i < len; i++) {
       distances[i] = fabs(dataset[i].coords[chosen_axis] - computed_mean);
     }
