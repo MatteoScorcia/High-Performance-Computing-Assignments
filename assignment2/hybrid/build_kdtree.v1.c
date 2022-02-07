@@ -299,6 +299,7 @@ int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, 
 
   #pragma omp parallel for shared(dataset, distances) firstprivate(computed_median, chosen_axis) schedule(static) proc_bind(close)
     for (int i = 0; i < len; i++) {
+      printf("distances[%d] = %f \n", i, distances[i]);
       distances[i] = fabs(dataset[i].coords[chosen_axis] - computed_median);
     }
 
@@ -309,6 +310,7 @@ int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, 
    
     #pragma omp parallel for shared(distances) reduction(minimum:min_distance) schedule(static) proc_bind(close)
       for (int i = 0; i < len; i++) {
+        printf("distances[%d]: %f, min_distance.val: %f\n", i, distances[i], min_distance.val);
         if (distances[i] < min_distance.val) {
           min_distance.val = distances[i];
           min_distance.index = i;
