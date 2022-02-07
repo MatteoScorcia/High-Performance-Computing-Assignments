@@ -19,7 +19,7 @@ typedef struct kpoint_s {
 } kpoint;
 
 kpoint *generate_dataset(int len);
-void get_chunk_sizes(int dataset_len, int *results, int final_level, int level, int counter);
+void get_chunk_sizes(int dataset_len, int *results, int results_len, int final_level, int level);
 
 int main(int argc, char *argv[])
 {
