@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
     kpoint current_median = dataset[0];
     int current_median_idx = 0;
 
-    //#pragma omp parallel for shared(dataset, computed_median, current_median) schedule(static) proc_bind(close)
+    #pragma omp parallel for shared(dataset, computed_median, current_median) schedule(static) proc_bind(close)
     for (int i = 1; i < len; i++) {
       // if (fabs(dataset[i].coords[1] - computed_median.coords[1]) < fabs(dataset[i].coords[1] - current_median.coords[1])) {
       //   printf("|%f[%d] - %f| = %f \n", dataset[i].coords[1], i,  computed_median.coords[1], fabs(dataset[i].coords[1] - computed_median.coords[1]));
