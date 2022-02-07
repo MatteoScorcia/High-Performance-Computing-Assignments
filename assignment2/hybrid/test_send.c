@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
  
   printf("mpi process %d init!\n", my_rank);
   
-  kpoint dataset[9] = {{2, 3}, {5, 4}, {9, 6}, {6, 22}, {4, 7},
+  kpoint dataset[9] = {{2, 3}, {6, 4}, {9, 6}, {6, 22}, {4, 7},
                        {8, 1}, {7, 2}, {8, 9}, {1, 1}};
   int len = sizeof(dataset) / sizeof(dataset[0]);
 
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 
     struct Compare min_distance;
     min_distance.val = distances[0];
-    min_distance.index = 0;
+    min_distance.index = 10;
 
     #pragma omp parallel for reduction(minimum:min_distance) schedule(static) proc_bind(close)
       for (int i = 1; i < len; i++) {
