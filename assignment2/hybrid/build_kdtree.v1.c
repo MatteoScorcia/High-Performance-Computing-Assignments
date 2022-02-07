@@ -270,6 +270,8 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
 
   int len_left = median_idx;    // length of the left points
   int len_right = len - (median_idx + 1); // length of the right points
+
+  printf("len_left: %d, len_right: %d\n", len_left, len_right);
   
   if (len_left != 0) {
     left_points = &dataset[0];       // starting pointer of left_points
@@ -318,7 +320,7 @@ int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, 
         }
       }
   free(distances);
-  printf("min distance index: %d\n", min_distance.index);
+  // printf("min distance index: %d\n", min_distance.index);
   return min_distance.index;
 }
 
