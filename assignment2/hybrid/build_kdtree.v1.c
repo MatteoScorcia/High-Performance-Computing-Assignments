@@ -205,8 +205,6 @@ struct kdnode *build_kdtree(kpoint *dataset, int len, int previous_axis) {
   int len_left = median_idx;    // length of the left points
   int len_right = len - (median_idx + 1); // length of the right points
 
-  printf("len_left: %d, len_right: %d\n", len_left, len_right);
-  
   if (len_left != 0) {
     left_points = &dataset[0];       // starting pointer of left_points
 
@@ -246,6 +244,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, int len, i
     copy_dataset(chunk, dataset, len);
 
     MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
+    MPI_Send(&previous_axis, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
 
     printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n", omp_get_thread_num(), counter);
 
