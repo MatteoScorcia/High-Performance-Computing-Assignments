@@ -85,7 +85,8 @@ int main(int argc, char *argv[])
           min_distance.index = i;
         }
       }
-      printf("median for x axis of whole dataset is %f, index is %d, distance is %f\n", dataset[min_distance.index].coords[0], min_distance.index, min_distance.val);
+
+      printf("min_distance index is %d, min_distance value is %f\n", min_distance.index, min_distance.val);
   }
 
 	MPI_Finalize();
