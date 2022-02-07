@@ -255,22 +255,16 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, float_t ex
     leaf->right = NULL;
 
     return leaf;
+  } else if(len < 1) {
+    return NULL:
   }
 
   struct kdnode *node = malloc(sizeof(struct kdnode));
 
   int chosen_axis = choose_splitting_dimension(extremes);
 
-  printf("x coord of dataset[0] is %f\n", dataset[0].coords[0]);
   int median_idx = choose_splitting_point(dataset, extremes, len, chosen_axis);
   
-  printf("median_idx is %d\n", median_idx);
-
-  if (median_idx == 0 ) {
-    printf("error \n");
-    return NULL;
-  }
-
   node->axis = chosen_axis;
   node->split = dataset[median_idx];
 
