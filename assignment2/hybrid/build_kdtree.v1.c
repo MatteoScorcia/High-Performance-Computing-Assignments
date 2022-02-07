@@ -352,5 +352,3 @@ void copy_dataset(kpoint *new_dataset, kpoint *dataset, int len) {
     new_dataset[i].coords[1] = dataset[i].coords[1];
   }
 }
-
-}
