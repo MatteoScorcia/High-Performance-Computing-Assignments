@@ -71,12 +71,14 @@ int main(int argc, char *argv[]) {
 
   tstart = CPU_TIME;
 
+  omp_set_nested(1);
+
   #pragma omp parallel shared(nthreads)
   {
     #pragma omp single
     {
       nthreads = omp_get_num_threads();
-      printf("I am mpi process %d an I have %d threads\n", my_rank, nthreads);
+      printf("I am mpi process %d an I have %d threads, nested is %d\n", my_rank, nthreads, omp_get_nested());
     }
   }
 
@@ -97,9 +99,6 @@ int main(int argc, char *argv[]) {
     kpoint *dataset = generate_dataset(len);
 
     printf("len: %d\n", len);
-
-    omp_set_nested(1);
-    printf("nested: %d\n",omp_get_nested());
 
     struct kdnode *root;
 
