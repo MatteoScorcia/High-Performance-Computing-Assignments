@@ -210,18 +210,18 @@ struct kdnode *build_kdtree(kpoint *dataset, int len, int previous_axis) {
   if (len_left != 0) {
     left_points = &dataset[0];       // starting pointer of left_points
 
-    #pragma omp task shared(left_points) firstprivate(len_left, chosen_axis) if(len_left >= build_cutoff) mergeable untied
+    // #pragma omp task shared(left_points) firstprivate(len_left, chosen_axis) if(len_left >= build_cutoff) mergeable untied
       node->left = build_kdtree(left_points, len_left, chosen_axis);
   }
   
   if(len_right != 0) {
     right_points = &dataset[median_idx + 1]; // starting pointer of right_points
     
-    #pragma omp task shared(right_points) firstprivate(len_right, chosen_axis) if(len_right >= build_cutoff) mergeable untied
+    // #pragma omp task shared(right_points) firstprivate(len_right, chosen_axis) if(len_right >= build_cutoff) mergeable untied
       node->right = build_kdtree(right_points, len_right, chosen_axis);
   }
 
-  #pragma omp taskwait
+  // #pragma omp taskwait
   return node;
 }
 
@@ -274,18 +274,18 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, int len, i
   if (len_left != 0) {
     left_points = &dataset[0];       // starting pointer of left_points
 
-    #pragma omp task shared(left_points, counter) firstprivate(len_left, chosen_axis, current_level, final_level) if(len_left >= build_cutoff) mergeable untied
+    // #pragma omp task shared(left_points, counter) firstprivate(len_left, chosen_axis, current_level, final_level) if(len_left >= build_cutoff) mergeable untied
       node->left = build_kdtree_until_level_then_scatter(left_points, len_left, chosen_axis, current_level+1, final_level, counter+0);
   }
   
   if(len_right != 0) {
     right_points = &dataset[median_idx + 1]; // starting pointer of right_points
 
-    #pragma omp task shared(right_points, counter) firstprivate(len_right, chosen_axis, current_level, final_level) if(len_right >= build_cutoff) mergeable untied
+    // #pragma omp task shared(right_points, counter) firstprivate(len_right, chosen_axis, current_level, final_level) if(len_right >= build_cutoff) mergeable untied
       node->right = build_kdtree_until_level_then_scatter(right_points, len_right, chosen_axis, current_level+1, final_level, counter+1);
   }
   
-  #pragma omp taskwait
+  // #pragma omp taskwait
   return node;
 }
 
