@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     printf("starting pre-sorting..\n");
     #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len)
     {
-      #pragma omp master
+      #pragma omp single nowait
       {
         if(chosen_axis == x_axis) {
           pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
@@ -141,19 +141,19 @@ int main(int argc, char *argv[]) {
 
     int final_level = log2(numprocs);
     
-    // #pragma omp parallel shared(dataset_ptrs, root) firstprivate(extremes, chosen_axis, len, final_level) 
-    // {
-    //   #pragma omp single nowait
-    //   {
-    //     int current_level = 0, counter = 0;
-    //     root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, counter);
-    //     printf("finished build kd_tree until level %d\n", final_level);
-    //   }
-    // }
+    #pragma omp parallel shared(dataset_ptrs, root) firstprivate(extremes, chosen_axis, len, final_level)
+    {
+      #pragma omp single nowait
+      {
+        int current_level = 0, counter = 0;
+        root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, counter);
+        printf("finished build kd_tree until level %d\n", final_level);
+      }
+    }
 
-    int current_level = 0, counter = 0;
-    root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, counter);
-    printf("finished build kd_tree until level %d\n", final_level);
+    // int current_level = 0, counter = 0;
+    // root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, counter);
+    // printf("finished build kd_tree until level %d\n", final_level);
 
     printf("mpi process %d has root node is %f,%f\n", my_rank, root->split.coords[0], root->split.coords[1]);
 
@@ -183,17 +183,17 @@ int main(int argc, char *argv[]) {
     
     printf("i am mpi process %d, start building my kd-tree..\n", my_rank);
 
-    // #pragma omp parallel shared(recv_dataset_ptrs, chunk_root) firstprivate(recv_extremes, recv_axis, recv_len) 
-    // {
-    //   #pragma omp single nowait
-    //   {
-    //     int current_level = 0;
-    //     chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len, recv_axis, current_level);
-    //   }
-    // }
+    #pragma omp parallel shared(recv_dataset_ptrs, chunk_root) firstprivate(recv_extremes, recv_axis, recv_len)
+    {
+      #pragma omp single nowait
+      {
+        int current_level = 0;
+        chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len, recv_axis, current_level);
+      }
+    }
 
-    int current_level = 0;
-    chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len, recv_axis, current_level);
+    // int current_level = 0;
+    // chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len, recv_axis, current_level);
 
     printf("i am mpi process %d, my chunk root node is %f,%f\n", my_rank, chunk_root->split.coords[0], chunk_root->split.coords[1]);
     free(recv_dataset);
@@ -235,27 +235,27 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
 
   int chosen_axis = choose_splitting_dimension(extremes);
 
-  #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, previous_axis, len)
-    #pragma omp single nowait
-    {
-      if (chosen_axis != previous_axis) {
-        if(chosen_axis == x_axis) {
-          pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
-        } else {
-          pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_g_y_axis);
-        }
-      }   
-    }
-  // #pragma omp taskgroup
-  // {
-  //   if (chosen_axis != previous_axis) {
-  //     if(chosen_axis == x_axis) {
-  //       pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
-  //     } else {
-  //       pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_g_y_axis);
-  //     }
-  //   }   
-  // }
+  // #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, previous_axis, len)
+  //   #pragma omp single nowait
+  //   {
+  //     if (chosen_axis != previous_axis) {
+  //       if(chosen_axis == x_axis) {
+  //         pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
+  //       } else {
+  //         pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_g_y_axis);
+  //       }
+  //     }   
+  //   }
+  #pragma omp taskgroup
+  {
+    if (chosen_axis != previous_axis) {
+      if(chosen_axis == x_axis) {
+        pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
+      } else {
+        pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_g_y_axis);
+      }
+    }  
+  }
 
   kpoint *split_point = choose_splitting_point(dataset_ptrs, len, chosen_axis);
   node->axis = chosen_axis;
@@ -273,7 +273,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
     extremes[chosen_axis][0] = dataset_ptrs[0]->coords[chosen_axis]; //min value of chosen axis for left points
     extremes[chosen_axis][1] = dataset_ptrs[len_left - 1]->coords[chosen_axis]; //max value of chosen axis for left points
 
-    // #pragma omp task shared(left_points) firstprivate(extremes, len_left, chosen_axis, level) if(len_left >= build_cutoff) mergeable untied
+    #pragma omp task shared(left_points) firstprivate(extremes, len_left, chosen_axis, level) if(len_left >= build_cutoff) mergeable untied
       node->left = build_kdtree(left_points, extremes, len_left, chosen_axis, level+1);
   }
 
@@ -282,10 +282,10 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
   extremes[chosen_axis][0] = dataset_ptrs[median_idx]->coords[chosen_axis]; //min value of chosen axis for right points
   extremes[chosen_axis][1] = dataset_ptrs[len - 1]->coords[chosen_axis]; //max value of chosen axis for right points
 
-  // #pragma omp task shared(right_points) firstprivate(extremes, len_right, chosen_axis, level) if(len_right >= build_cutoff) mergeable untied
+  #pragma omp task shared(right_points) firstprivate(extremes, len_right, chosen_axis, level) if(len_right >= build_cutoff) mergeable untied
     node->right = build_kdtree(right_points, extremes, len_right, chosen_axis, level+1);
   
-  // #pragma omp taskwait
+  #pragma omp taskwait
   return node;
 }
 
