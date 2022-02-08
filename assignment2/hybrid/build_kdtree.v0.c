@@ -302,16 +302,17 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
 
   int chosen_axis = choose_splitting_dimension(extremes);
 
-  #pragma omp taskgroup
-  {
-    if (chosen_axis != previous_axis) {
-      if(chosen_axis == x_axis) {
-        pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
-      } else {
-        pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_g_y_axis);
-      }
-    }   
-  }
+  #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, previous_axis, len)
+    #pragma omp single
+    {
+      if (chosen_axis != previous_axis) {
+        if(chosen_axis == x_axis) {
+          pqsort(dataset_ptrs, 0, len, compare_ge_x_axis, compare_g_x_axis);
+        } else {
+          pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_g_y_axis);
+        }
+      }   
+    }
 
   kpoint *split_point = choose_splitting_point(dataset_ptrs, len, chosen_axis);
 
@@ -492,7 +493,7 @@ void pqsort(kpoint **data, int start, int end,
             int (*comparator)(const void *, const void *), int(*comparator_insort)(const void *, const void *)) {
   int size = end - start;
 
-  printf("qsort by thread %d\n", omp_get_num_threads());
+  // printf("qsort by thread %d\n", omp_get_num_threads());
 
   switch (size) {
   case 1:
