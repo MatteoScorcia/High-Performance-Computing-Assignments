@@ -370,6 +370,7 @@ void get_dataset_extremes(kpoint **dataset, float_t extremes[NDIM][2], int len, 
   float_t min_value = max_value;
   #pragma omp parallel for reduction(max:max_value) reduction(min:min_value) schedule(static) proc_bind(close)
   for (int i = 1; i < len; i++) {
+    printf("%d\n", omp_get_thread_num());
     max_value = max_value > dataset[i]->coords[axis] ? max_value : dataset[i]->coords[axis];
     min_value = min_value < dataset[i]->coords[axis] ? min_value : dataset[i]->coords[axis];
   }
