@@ -320,7 +320,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
           copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
 
           MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, i, 0, MPI_COMM_WORLD);
-          MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
+          MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, i, 0, MPI_COMM_WORLD);
           MPI_Send(&previous_axis, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
 
           printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n", omp_get_thread_num(), counter);
