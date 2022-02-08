@@ -116,15 +116,19 @@ int main(int argc, char *argv[]) {
     int final_level = log2(numprocs);
     
     printf("start building kdtree..\n");
-    #pragma omp parallel shared(dataset, root) firstprivate(extremes, chosen_axis, len, final_level) 
-    {
-      #pragma omp single nowait
-      {
-        int current_level = 0, counter = 0;
-        root = build_kdtree_until_level_then_scatter(dataset, len, chosen_axis, current_level, final_level, counter);
-        printf("finished build kd_tree on process %d \n", my_rank);
-      }
-    }
+    // #pragma omp parallel shared(dataset, root) firstprivate(extremes, chosen_axis, len, final_level) 
+    // {
+    //   #pragma omp single nowait
+    //   {
+    //     int current_level = 0, counter = 0;
+    //     root = build_kdtree_until_level_then_scatter(dataset, len, chosen_axis, current_level, final_level, counter);
+    //     printf("finished build kd_tree on process %d \n", my_rank);
+    //   }
+    // }
+
+    int current_level = 0, counter = 0;
+    root = build_kdtree_until_level_then_scatter(dataset, len, chosen_axis, current_level, final_level, counter);
+    printf("finished build kd_tree on process %d \n", my_rank);
 
     printf("mpi process %d has root node is %f,%f\n", my_rank, root->split.coords[0], root->split.coords[1]);
 
@@ -146,14 +150,17 @@ int main(int argc, char *argv[]) {
     
     printf("i am mpi process %d, start building my kd-tree..\n", my_rank);
 
-    #pragma omp parallel shared(recv_dataset, chunk_root) firstprivate(recv_axis, recv_len) 
-    {
-      #pragma omp single nowait
-      {
-        int current_level = 0;
-        chunk_root = build_kdtree(recv_dataset, recv_len, recv_axis);
-      }
-    }
+    // #pragma omp parallel shared(recv_dataset, chunk_root) firstprivate(recv_axis, recv_len) 
+    // {
+    //   #pragma omp single nowait
+    //   {
+    //     int current_level = 0;
+    //     chunk_root = build_kdtree(recv_dataset, recv_len, recv_axis);
+    //   }
+    // }
+
+    int current_level = 0;
+    chunk_root = build_kdtree(recv_dataset, recv_len, recv_axis);
 
     printf("i am mpi process %d, my chunk root node is %f,%f\n", my_rank, chunk_root->split.coords[0], chunk_root->split.coords[1]);
     free(recv_dataset);
