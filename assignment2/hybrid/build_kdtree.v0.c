@@ -185,8 +185,8 @@ int main(int argc, char *argv[]) {
     kpoint **recv_dataset_ptrs = malloc(recv_len * sizeof(kpoint *));
     get_dataset_ptrs(recv_dataset, recv_dataset_ptrs, recv_len);
 
-    float_t recv_extremes[NDIM][2] = {};
-    MPI_Recv(recv_extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, 0, 0,
+    kpoint recv_extremes[NDIM] = {};
+    MPI_Recv(recv_extremes, NDIM * sizeof(kpoint), MPI_BYTE, 0, 0,
              MPI_COMM_WORLD, &status);
 
     int recv_axis;
@@ -306,7 +306,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, kpoint extremes[NDIM],
 }
 
 struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
-                                        float_t extremes[NDIM][2], int len,
+                                        kpoint extremes[NDIM], int len,
                                         int previous_axis, int current_level,
                                         int final_level, int is_root_proc,
                                         int *is_proc_free) {
@@ -336,7 +336,7 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
           copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
 
           MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, i, 0, MPI_COMM_WORLD);
-          MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, i, 0,
+          MPI_Send(extremes, NDIM * sizeof(kpoint), MPI_BYTE, i, 0,
                    MPI_COMM_WORLD);
           MPI_Send(&previous_axis, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
 
