@@ -98,6 +98,7 @@ int main(int argc, char *argv[]) {
 
     printf("len: %d\n", len);
 
+    omp_set_nested(1);
     printf("nested: %d\n",omp_get_nested());
 
     struct kdnode *root;
