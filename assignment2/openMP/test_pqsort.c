@@ -181,36 +181,10 @@ void print_array(kpoint **arr, int len) {
   }
 }
 
-kpoint **median_of_three(kpoint **a, kpoint **b, kpoint **c,
-                         int (*comparator)(const void *, const void *)) {
-  if (comparator(b, a) && comparator(c, b))
-    return b; // a b c
-  if (comparator(c, a) && comparator(b, c))
-    return c; // a c b
-  if (comparator(a, b) && comparator(c, a))
-    return a; // b a c
-  if (comparator(c, b) && comparator(a, c))
-    return c; // b c a
-  if (comparator(a, c) && comparator(b, a))
-    return a; // c a b
-  return b;   // c b a
-}
-
 int partitioning(kpoint **data, int start, int end,
                  int (*comparator)(const void *, const void *)) {
-
-  // pick up the meadian of [0], [mid] and [end] as pivot
-  //
-  /* to be done */
-
-  // pick up the last element as pivot
-  //
   --end;
   void *pivot = &data[end];
-  // int mid = ceil((end - start) / 2.0);
-  // --end;
-  // void *pivot = median_of_three(&data[0], &data[mid], &data[end],
-  // comparator);
 
   int pointbreak = end - 1;
   for (int i = start; i <= pointbreak; i++)
@@ -267,7 +241,6 @@ shared(data) firstprivate(start, mid, comparator) untied
     int end_mid = end - (mid + 1);
     if (end_mid)
 #pragma omp task default(none) final(end_mid < task_cutoff) mergeable shared(  \
-                                                                               \
     data) firstprivate(mid, end, comparator) untied
       pqsort(data, mid + 1, end, comparator);
   }
