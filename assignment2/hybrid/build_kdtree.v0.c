@@ -70,8 +70,7 @@ int choose_splitting_dimension(kpoint extremes[NDIM]);
 kpoint *choose_splitting_point(kpoint **dataset_ptrs, int len, int chosen_axis);
 void get_dataset_extremes(kpoint **dataset, kpoint extremes[NDIM], int len,
                           int axis);
-void copy_extremes(kpoint old_extremes[NDIM],
-                   kpoint new_extremes[NDIM]);
+void copy_extremes(kpoint old_extremes[NDIM], kpoint new_extremes[NDIM]);
 
 int main(int argc, char *argv[]) {
 
@@ -129,7 +128,7 @@ int main(int argc, char *argv[]) {
 
     printf("choosing splitting dimension..\n");
     // min_value (index 0) and max value (index 1) in each dimension NDIM
-    kpoint extremes[NDIM];                                
+    kpoint extremes[NDIM];
     get_dataset_extremes(dataset_ptrs, extremes, len, x_axis);
     get_dataset_extremes(dataset_ptrs, extremes, len, y_axis);
 
@@ -271,13 +270,12 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, kpoint extremes[NDIM],
 
   if (len_left != 0) {
     left_points = &dataset_ptrs[0]; // starting pointer of left_points
-    
+
     // min value of chosen axis for left points
-    extremes[chosen_axis].coords[0] =
-        dataset_ptrs[0]->coords[chosen_axis]; 
+    extremes[chosen_axis].coords[0] = dataset_ptrs[0]->coords[chosen_axis];
     // max value of chosen axis for left points
     extremes[chosen_axis].coords[1] =
-        dataset_ptrs[len_left - 1]->coords[chosen_axis]; 
+        dataset_ptrs[len_left - 1]->coords[chosen_axis];
 
 #pragma omp task shared(left_points)                                           \
     firstprivate(extremes, len_left, chosen_axis,                              \
@@ -290,10 +288,9 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, kpoint extremes[NDIM],
 
   // min value of chosen axis for right points
   extremes[chosen_axis].coords[0] =
-      dataset_ptrs[median_idx]->coords[chosen_axis]; 
+      dataset_ptrs[median_idx]->coords[chosen_axis];
   // max value of chosen axis for right points
-  extremes[chosen_axis].coords[1] =
-      dataset_ptrs[len - 1]->coords[chosen_axis]; 
+  extremes[chosen_axis].coords[1] = dataset_ptrs[len - 1]->coords[chosen_axis];
 
 #pragma omp task shared(right_points)                                          \
     firstprivate(extremes, len_right, chosen_axis,                             \
@@ -324,30 +321,29 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
     int numprocs = (int)(pow(2, final_level) + 1e-9);
 
 #pragma omp critical
-      for (int i = 1; i < numprocs; i++) {
-        if (is_proc_free[i] == 1) {
-          is_proc_free[i] = 0;
-          MPI_Send(&len, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-          printf("sent chunk_length from mpi process 0 to mpi process %d, len "
-                 "%d\n",
-                 i, len);
+    for (int i = 1; i < numprocs; i++) {
+      if (is_proc_free[i] == 1) {
+        is_proc_free[i] = 0;
+        MPI_Send(&len, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+        printf("sent chunk_length from mpi process 0 to mpi process %d, len "
+               "%d\n",
+               i, len);
 
-          kpoint *chunk = malloc(len * sizeof(kpoint));
-          copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
+        kpoint *chunk = malloc(len * sizeof(kpoint));
+        copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
 
-          MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, i, 0, MPI_COMM_WORLD);
-          MPI_Send(extremes, NDIM * sizeof(kpoint), MPI_BYTE, i, 0,
-                   MPI_COMM_WORLD);
-          MPI_Send(&previous_axis, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+        MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, i, 0, MPI_COMM_WORLD);
+        MPI_Send(extremes, NDIM * sizeof(kpoint), MPI_BYTE, i, 0,
+                 MPI_COMM_WORLD);
+        MPI_Send(&previous_axis, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
 
-          printf(
-              "sent chunk from mpi process 0, thread %d, to mpi process %d\n",
-              omp_get_thread_num(), i);
+        printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n",
+               omp_get_thread_num(), i);
 
-          free(chunk);
-          break;
-        }
+        free(chunk);
+        break;
       }
+    }
 
     return NULL;
   }
@@ -383,16 +379,15 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
     left_points = &dataset_ptrs[0]; // starting pointer of left_points
 
     // min value of chosen axis for left points
-    extremes[chosen_axis].coords[0] =
-        dataset_ptrs[0]->coords[chosen_axis]; 
+    extremes[chosen_axis].coords[0] = dataset_ptrs[0]->coords[chosen_axis];
     // max value of chosen axis for left points
     extremes[chosen_axis].coords[1] =
-        dataset_ptrs[len_left - 1]->coords[chosen_axis]; 
+        dataset_ptrs[len_left - 1]->coords[chosen_axis];
 
-#pragma omp task shared(left_points, is_root_proc, is_proc_free)
-    firstprivate(extremes, len_left, chosen_axis, current_level,
-                 final_level) if (len_left >= build_cutoff)
-        mergeable untied node->left = build_kdtree_until_level(
+#pragma omp task shared(left_points, is_root_proc, is_proc_free)               \
+    firstprivate(extremes, len_left, chosen_axis, current_level,               \
+                 final_level) if (len_left >= build_cutoff) mergeable untied
+    node->left = build_kdtree_until_level(
         left_points, extremes, len_left, chosen_axis, current_level + 1,
         final_level, is_root_proc + 0, is_proc_free);
   }
@@ -401,15 +396,14 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
 
   // min value of chosen axis for right points
   extremes[chosen_axis].coords[0] =
-      dataset_ptrs[median_idx]->coords[chosen_axis]; 
+      dataset_ptrs[median_idx]->coords[chosen_axis];
   // max value of chosen axis for right points
-  extremes[chosen_axis].coords[1] =
-      dataset_ptrs[len - 1]->coords[chosen_axis]; 
+  extremes[chosen_axis].coords[1] = dataset_ptrs[len - 1]->coords[chosen_axis];
 
-#pragma omp task shared(right_points, is_root_proc, is_proc_free)
-  firstprivate(extremes, len_right, chosen_axis, current_level,
-               final_level) if (len_right >= build_cutoff)
-      mergeable untied node->right = build_kdtree_until_level(
+#pragma omp task shared(right_points, is_root_proc, is_proc_free)              \
+    firstprivate(extremes, len_right, chosen_axis, current_level,              \
+                 final_level) if (len_right >= build_cutoff) mergeable untied
+  node->right = build_kdtree_until_level(
       right_points, extremes, len_right, chosen_axis, current_level + 1,
       final_level, is_root_proc + 1, is_proc_free);
 
@@ -425,9 +419,11 @@ kpoint *choose_splitting_point(kpoint **ordered_dataset, int len,
 
 int choose_splitting_dimension(kpoint extremes[NDIM]) {
   float_t x_extent =
-      extremes[x_axis].coords[1] - extremes[x_axis].coords[0]; // max value - min value of x axis
+      extremes[x_axis].coords[1] -
+      extremes[x_axis].coords[0]; // max value - min value of x axis
   float_t y_extent =
-      extremes[y_axis].coords[1] - extremes[y_axis].coords[0]; // max value - min value of y axis
+      extremes[y_axis].coords[1] -
+      extremes[y_axis].coords[0]; // max value - min value of y axis
 
   if (x_extent > y_extent) {
     return x_axis;
@@ -444,17 +440,18 @@ void get_dataset_extremes(kpoint **dataset, kpoint extremes[NDIM], int len,
                                                           : min_value)         \
     schedule(static) proc_bind(close)
   for (int i = 1; i < len; i++) {
-    max_value = max_value > dataset[i]->coords[chosen_axis] ? max_value
-                                                     : dataset[i]->coords[chosen_axis];
-    min_value = min_value < dataset[i]->coords[chosen_axis] ? min_value
-                                                     : dataset[i]->coords[chosen_axis];
+    max_value = max_value > dataset[i]->coords[chosen_axis]
+                    ? max_value
+                    : dataset[i]->coords[chosen_axis];
+    min_value = min_value < dataset[i]->coords[chosen_axis]
+                    ? min_value
+                    : dataset[i]->coords[chosen_axis];
   }
-  extremes[chosen_axis][0] = min_value;
-  extremes[chosen_axis][1] = max_value;
+  extremes[chosen_axis].coords[0] = min_value;
+  extremes[chosen_axis].coords[1] = max_value;
 }
 
-void copy_extremes(kpoint old_extremes[NDIM],
-                   kpoint new_extremes[NDIM]) {
+void copy_extremes(kpoint old_extremes[NDIM], kpoint new_extremes[NDIM]) {
   for (int dim = 0; dim < NDIM; dim++) {
     new_extremes[dim].coords[0] = old_extremes[dim].coords[0];
     new_extremes[dim].coords[1] = old_extremes[dim].coords[1];
