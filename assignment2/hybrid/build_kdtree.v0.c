@@ -323,7 +323,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
           MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, i, 0, MPI_COMM_WORLD);
           MPI_Send(&previous_axis, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
 
-          printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n", omp_get_thread_num(), counter);
+          printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n", omp_get_thread_num(), i);
 
           free(chunk);
           break;
