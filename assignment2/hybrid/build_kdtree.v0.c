@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
       is_proc_free[i] = 1;
     }
     
-    #pragma omp parallel shared(dataset_ptrs, root, chunk_sizes) firstprivate(extremes, chosen_axis, len, final_level)
+    #pragma omp parallel shared(dataset_ptrs, root, is_proc_free) firstprivate(extremes, chosen_axis, len, final_level)
     {
       #pragma omp single nowait
       {
