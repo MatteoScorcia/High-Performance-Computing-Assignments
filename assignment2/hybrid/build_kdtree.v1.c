@@ -235,7 +235,6 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint *dataset, int len, i
   }
 
   if ((current_level == final_level) && (counter != 0)) {
-
     //TODO: works only for numprocs = 2 for now 
     MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
     printf("sent chunk_length from mpi process 0 to mpi process %d, len %d\n", counter, len);
@@ -311,7 +310,6 @@ int choose_splitting_point(kpoint *dataset, float_t extremes[NDIM][2], int len, 
         }
       }
   free(distances);
-  // printf("min distance index: %d\n", min_distance.index);
   return min_distance.index;
 }
 

@@ -272,8 +272,17 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
 }
 
 struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int current_level, int final_level, int counter) {
-  if ((current_level == final_level) && (counter != 0)) {
+  if (len == 1) {
+    struct kdnode *leaf = malloc(sizeof(struct kdnode));
+    leaf->axis = previous_axis;
+    leaf->split = *dataset_ptrs[0];
+    leaf->left = NULL;
+    leaf->right = NULL;
 
+    return leaf;
+  }
+
+  if ((current_level == final_level) && (counter != 0)) {
     //TODO: works only for numprocs = 2 for now 
     MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
     printf("sent chunk_length from mpi process 0 to mpi process %d, len %d\n", counter, len);
@@ -291,18 +300,6 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     return NULL;
   }
 
-  if (len == 1) {
-    struct kdnode *leaf = malloc(sizeof(struct kdnode));
-    leaf->axis = previous_axis;
-    leaf->split = *dataset_ptrs[0];
-    leaf->left = NULL;
-    leaf->right = NULL;
-
-    return leaf;
-  }
-
-  struct kdnode *node = malloc(sizeof(struct kdnode));
-
   int chosen_axis = choose_splitting_dimension(extremes);
 
   #pragma omp taskgroup
@@ -317,14 +314,16 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
   }
 
   kpoint *split_point = choose_splitting_point(dataset_ptrs, len, chosen_axis);
+
+  struct kdnode *node = malloc(sizeof(struct kdnode));
   node->axis = chosen_axis;
   node->split = *split_point;
 
   kpoint **left_points, **right_points;
 
-  int median_idx = ceil(len / 2.0);
-  int len_left = median_idx - 1;    // length of the left points
-  int len_right = len - median_idx; // length of the right points
+  int median_idx = ceil(len / 2.0) - 1;
+  int len_left = median_idx;    // length of the left points
+  int len_right = len - (median_idx + 1); // length of the right points
   
   if (len_left != 0) {
     left_points = &dataset_ptrs[0];       // starting pointer of left_points
