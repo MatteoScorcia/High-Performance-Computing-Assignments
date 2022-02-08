@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 	int my_rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-  printf("print provided %d\n", *provided);
+  printf("MPI_THREAD specification provided is %d\n", *provided);
 
   tstart = CPU_TIME;
 
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
     #pragma omp single
     {
       nthreads = omp_get_num_threads();
-      printf("I am mpi process %d an I have %d threads\n", my_rank, nthreads);
+      printf("I am mpi process %d and I have %d threads\n", my_rank, nthreads);
     }
   }
 

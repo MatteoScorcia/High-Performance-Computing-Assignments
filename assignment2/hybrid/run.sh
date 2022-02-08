@@ -16,6 +16,6 @@ mpirun --map-by node --mca btl ^openib --mca pml ucx -np 2 ./build_kdtree.v0 $PO
 #for version 1
 $NUMTHREADS=8
 
-export OMP_NUM_THREADS=2,$NUMTHREADS
+export OMP_NUM_THREADS=$NUMTHREADS
 
 export OMP_PLACES=sockets
