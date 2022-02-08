@@ -56,7 +56,7 @@ void copy_dataset_from_ptrs(kpoint *new_dataset, kpoint **dataset_ptrs, int len)
 
 // kd-tree build functions
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level);
-struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level, int final_level, int is_root_proc, int *is_proc_free);
+struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level, int final_level, int is_root_proc, int *is_proc_free);
 int choose_splitting_dimension(float_t extremes[NDIM][2]);
 kpoint *choose_splitting_point(kpoint **dataset_ptrs, int len, int chosen_axis);
 void get_dataset_extremes(kpoint **dataset, float_t extremes[NDIM][2], int len, int axis);
@@ -151,13 +151,13 @@ int main(int argc, char *argv[]) {
       #pragma omp single nowait
       {
         int current_level = 0, is_root_proc = 1;
-        root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, is_root_proc, is_proc_free);
+        root = build_kdtree_until_level(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, is_root_proc, is_proc_free);
         printf("finished build kd_tree until level %d\n", final_level);
       }
     }
 
     // int current_level = 0, counter = 0;
-    // root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, counter);
+    // root = build_kdtree_until_level(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, counter);
     // printf("finished build kd_tree until level %d\n", final_level);
 
     printf("mpi process %d has root node is %f,%f\n", my_rank, root->split.coords[0], root->split.coords[1]);
@@ -294,7 +294,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
   return node;
 }
 
-struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int current_level, int final_level, int is_root_proc, int *is_proc_free) {
+struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int current_level, int final_level, int is_root_proc, int *is_proc_free) {
   if (len == 1) {
     struct kdnode *leaf = malloc(sizeof(struct kdnode));
     leaf->axis = previous_axis;
@@ -378,7 +378,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     extremes[chosen_axis][1] = dataset_ptrs[len_left - 1]->coords[chosen_axis]; //max value of chosen axis for left points
 
     #pragma omp task shared(left_points, is_root_proc, is_proc_free) firstprivate(extremes, len_left, chosen_axis, current_level, final_level) if(len_left >= build_cutoff) mergeable untied
-      node->left = build_kdtree_until_level_then_scatter(left_points, extremes, len_left, chosen_axis, current_level+1, final_level, is_root_proc+0, is_proc_free);
+      node->left = build_kdtree_until_level(left_points, extremes, len_left, chosen_axis, current_level+1, final_level, is_root_proc+0, is_proc_free);
   }
 
   right_points = &dataset_ptrs[median_idx]; // starting pointer of right_points
@@ -387,7 +387,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
   extremes[chosen_axis][1] = dataset_ptrs[len - 1]->coords[chosen_axis]; //max value of chosen axis for right points
 
   #pragma omp task shared(right_points, is_root_proc, is_proc_free) firstprivate(extremes, len_right, chosen_axis, current_level, final_level) if(len_right >= build_cutoff) mergeable untied
-    node->right = build_kdtree_until_level_then_scatter(right_points, extremes, len_right, chosen_axis, current_level+1, final_level, is_root_proc+1, is_proc_free);
+    node->right = build_kdtree_until_level(right_points, extremes, len_right, chosen_axis, current_level+1, final_level, is_root_proc+1, is_proc_free);
   
   #pragma omp taskwait
   return node;
