@@ -56,7 +56,7 @@ void copy_dataset_from_ptrs(kpoint *new_dataset, kpoint **dataset_ptrs, int len)
 
 // kd-tree build functions
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level);
-struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level, int final_level, int counter, int* chunk_sizes);
+struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int axis, int level, int final_level, int is_root_proc, int *is_proc_free);
 int choose_splitting_dimension(float_t extremes[NDIM][2]);
 kpoint *choose_splitting_point(kpoint **dataset_ptrs, int len, int chosen_axis);
 void get_dataset_extremes(kpoint **dataset, float_t extremes[NDIM][2], int len, int axis);
@@ -141,17 +141,17 @@ int main(int argc, char *argv[]) {
 
     int final_level = log2(numprocs);
 
-    int chunk_sizes[numprocs];
+    int is_proc_free[numprocs];
     for (int i = 0; i < numprocs; i++) {
-      chunk_sizes[i] = 0;
+      is_proc_free[i] = 1;
     }
     
     #pragma omp parallel shared(dataset_ptrs, root, chunk_sizes) firstprivate(extremes, chosen_axis, len, final_level)
     {
       #pragma omp single nowait
       {
-        int current_level = 0, counter = 0;
-        root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, counter, chunk_sizes);
+        int current_level = 0, is_root_proc = 1;
+        root = build_kdtree_until_level_then_scatter(dataset_ptrs, extremes, len, chosen_axis, current_level, final_level, is_root_proc, is_proc_free);
         printf("finished build kd_tree until level %d\n", final_level);
       }
     }
@@ -294,7 +294,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, float_t extremes[NDIM][2], in
   return node;
 }
 
-struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int current_level, int final_level, int counter, int *chunk_sizes) {
+struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, float_t extremes[NDIM][2], int len, int previous_axis, int current_level, int final_level, int is_root_proc, int *is_proc_free) {
   if (len == 1) {
     struct kdnode *leaf = malloc(sizeof(struct kdnode));
     leaf->axis = previous_axis;
@@ -305,32 +305,32 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     return leaf;
   }
 
-  if ((current_level == final_level) && (counter != 0)) {
-    //TODO: works only for numprocs = 2 for now 
+  if ((current_level == final_level) && (is_root_proc == 1)) {
+    int numprocs = (int)(pow(2, final_level) + 1e-9);
+
     #pragma omp critical
     {
-      for(int i=1; i < (int)(pow(2, final_level) + 1e-9); i++) {
-        if (chunk_sizes[i] == 0) {
-          chunk_sizes[i] = len;
-          printf("chunk_sizes[%d] = %d\n", i, len);
+      for(int i=1; i < numprocs; i++) {
+        if (is_proc_free[i] == 1) {
+          is_proc_free[i] = 0;
+          MPI_Send(&len, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+          printf("sent chunk_length from mpi process 0 to mpi process %d, len %d\n", i, len);
+
+          kpoint *chunk = malloc(len * sizeof(kpoint));
+          copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
+
+          MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, i, 0, MPI_COMM_WORLD);
+          MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
+          MPI_Send(&previous_axis, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+
+          printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n", omp_get_thread_num(), counter);
+
+          free(chunk);
           break;
         }
       }
     }
     
-    MPI_Send(&len, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
-    printf("sent chunk_length from mpi process 0 to mpi process %d, len %d\n", counter, len);
-
-    kpoint *chunk = malloc(len * sizeof(kpoint));
-    copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
-
-    MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
-    MPI_Send(extremes, NDIM * 2 * sizeof(float_t), MPI_BYTE, counter, 0, MPI_COMM_WORLD);
-    MPI_Send(&previous_axis, 1, MPI_INT, counter, 0, MPI_COMM_WORLD);
-
-    printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n", omp_get_thread_num(), counter);
-
-    free(chunk);
     return NULL;
   }
 
@@ -377,7 +377,7 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
     extremes[chosen_axis][0] = dataset_ptrs[0]->coords[chosen_axis]; //min value of chosen axis for left points
     extremes[chosen_axis][1] = dataset_ptrs[len_left - 1]->coords[chosen_axis]; //max value of chosen axis for left points
 
-    // #pragma omp task shared(left_points, counter) firstprivate(extremes, len_left, chosen_axis, current_level, final_level) if(len_left >= build_cutoff) mergeable untied
+    #pragma omp task shared(left_points, counter) firstprivate(extremes, len_left, chosen_axis, current_level, final_level) if(len_left >= build_cutoff) mergeable untied
       node->left = build_kdtree_until_level_then_scatter(left_points, extremes, len_left, chosen_axis, current_level+1, final_level, counter+0, chunk_sizes);
   }
 
@@ -386,10 +386,10 @@ struct kdnode *build_kdtree_until_level_then_scatter(kpoint **dataset_ptrs, floa
   extremes[chosen_axis][0] = dataset_ptrs[median_idx]->coords[chosen_axis]; //min value of chosen axis for right points
   extremes[chosen_axis][1] = dataset_ptrs[len - 1]->coords[chosen_axis]; //max value of chosen axis for right points
 
-  // #pragma omp task shared(right_points, counter) firstprivate(extremes, len_right, chosen_axis, current_level, final_level) if(len_right >= build_cutoff) mergeable untied
+  #pragma omp task shared(right_points, counter) firstprivate(extremes, len_right, chosen_axis, current_level, final_level) if(len_right >= build_cutoff) mergeable untied
     node->right = build_kdtree_until_level_then_scatter(right_points, extremes, len_right, chosen_axis, current_level+1, final_level, counter+1, chunk_sizes);
   
-  // #pragma omp taskwait
+  #pragma omp taskwait
   return node;
 }
 
