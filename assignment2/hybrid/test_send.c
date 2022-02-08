@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
-void get_chunk_sizes(int dataset_len, int *results, int results_len, int final_level, int level) {
+void get_chunk_sizes(int dataset_len, int *chunk_sizes, int chunk_sizes_length, int final_level, int level) {
   int median = ceil(dataset_len / 2.0);
   int len_left = median - 1;
   int len_right = dataset_len - median;
@@ -109,17 +109,17 @@ void get_chunk_sizes(int dataset_len, int *results, int results_len, int final_l
   printf("median is %d, level is %d\n", median, level);
 
   if(level == final_level) {
-    for (int i = 0; i < results_len; i++) {
-      if (results[i] == 0) {
-        results[i] = dataset_len;
+    for (int i = 0; i < chunk_sizes_length; i++) {
+      if (chunk_sizes[i] == 0) {
+        chunk_sizes[i] = dataset_len;
         break;
       }
     }
     return;
   }
 
-  get_chunk_sizes(len_left, results, results_len, final_level, level+1);
-  get_chunk_sizes(len_right, results, results_len, final_level, level+1);
+  get_chunk_sizes(len_left, chunk_sizes, chunk_sizes_length, final_level, level+1);
+  get_chunk_sizes(len_right, chunk_sizes, chunk_sizes_length, final_level, level+1);
 }
 
 kpoint *generate_dataset(int len) {
