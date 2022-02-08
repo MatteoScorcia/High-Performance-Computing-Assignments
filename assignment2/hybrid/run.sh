@@ -13,7 +13,7 @@ mpicc build_kdtree.v0.c -fopenmp -lm -w -o build_kdtree.v0
 mpirun --map-by node --mca btl ^openib --mca pml ucx -np 2 ./build_kdtree.v0 $POINTS
 
 
-#for version 1
+#for version 0
 $NUMTHREADS=8
 
 export OMP_NUM_THREADS=$NUMTHREADS
