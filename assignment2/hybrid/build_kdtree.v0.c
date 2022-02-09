@@ -444,7 +444,7 @@ void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
       MPI_Send(&dataset_len, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
       printf("sent chunk_length from mpi process 0 to mpi process %d, len "
              "%d\n",
-             mpi_process, len);
+             mpi_process, dataset_len);
 
       kpoint *chunk = malloc(len * sizeof(kpoint));
       copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
