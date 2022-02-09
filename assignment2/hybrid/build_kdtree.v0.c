@@ -191,7 +191,7 @@ int main(int argc, char *argv[]) {
     MPI_Recv(&recv_len, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD, &status);
      
     recv_dataset = malloc(recv_len * sizeof(kpoint));
-    MPI_Recv(recv_dataset, (recv_len) * sizeof(kpoint), MPI_BYTE, mpi_root_process,
+    MPI_Recv(recv_dataset, recv_len * sizeof(kpoint), MPI_BYTE, mpi_root_process,
              0, MPI_COMM_WORLD, &status);
 
     MPI_Recv(recv_extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_root_process, 0,
