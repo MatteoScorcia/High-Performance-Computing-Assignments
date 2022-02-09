@@ -198,7 +198,7 @@ int main(int argc, char *argv[]) {
 
 #pragma omp parallel shared(recv_dataset_ptrs, chunk_root)                     \
     firstprivate(recv_extremes, recv_axis, recv_len)
-#pragma omp single
+#pragma omp single nowait
     {
       int level = 0;
       // chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len,
@@ -207,8 +207,8 @@ int main(int argc, char *argv[]) {
 
     // printf("i am mpi process %d, my chunk root node is %f,%f\n\n", my_rank,
     //        chunk_root->split.coords[0], chunk_root->split.coords[1]);
-    free(recv_dataset);
-    free(recv_dataset_ptrs);
+    // free(recv_dataset);
+    // free(recv_dataset_ptrs);
   }
 
   double telapsed = CPU_TIME - tstart;
