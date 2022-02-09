@@ -478,6 +478,7 @@ void recv_dataset_from_root_process(int recv_len, int recv_axis,
 
   MPI_Recv(&recv_axis, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD,
            &status);
+  printf("recv dataset chunk\n\n");
 }
 
 void copy_extremes(kpoint old_extremes[NDIM], kpoint new_extremes[NDIM]) {
