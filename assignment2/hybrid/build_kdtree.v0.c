@@ -201,12 +201,12 @@ int main(int argc, char *argv[]) {
 #pragma omp single nowait
     {
       int level = 0;
-      chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len,
+      // chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len,
                                 recv_axis, level);
     }
 
-    printf("i am mpi process %d, my chunk root node is %f,%f\n\n", my_rank,
-           chunk_root->split.coords[0], chunk_root->split.coords[1]);
+    // printf("i am mpi process %d, my chunk root node is %f,%f\n\n", my_rank,
+    //        chunk_root->split.coords[0], chunk_root->split.coords[1]);
     free(recv_dataset);
     free(recv_dataset_ptrs);
   }
