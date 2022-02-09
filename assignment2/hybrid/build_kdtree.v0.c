@@ -68,9 +68,12 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
                                         int is_root_proc, int *is_proc_free);
 int choose_splitting_dimension(kpoint extremes[NDIM]);
 kpoint *choose_splitting_point(kpoint **dataset_ptrs, int len, int chosen_axis);
-void get_dataset_extremes(kpoint **dataset, kpoint extremes[NDIM], int len,
+void get_dataset_extremes(kpoint **dataset_ptrs, kpoint extremes[NDIM], int len,
                           int axis);
 void copy_extremes(kpoint old_extremes[NDIM], kpoint new_extremes[NDIM]);
+void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
+                                  kpoint extremes[NDIM], int previous_axis,
+                                  int final_level, int *is_proc_free);
 
 int main(int argc, char *argv[]) {
 
@@ -307,6 +310,13 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
                                         int previous_axis, int current_level,
                                         int final_level, int is_root_proc,
                                         int *is_proc_free) {
+  if ((current_level == final_level) && (is_root_proc == 1)) {
+    send_dataset_to_free_process(len, dataset_ptrs, extremes, previous_axis,
+                                 final_level, is_proc_free);
+
+    return NULL;
+  }
+
   if (len == 1) {
     struct kdnode *leaf = malloc(sizeof(struct kdnode));
     leaf->axis = previous_axis;
@@ -315,37 +325,6 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
     leaf->right = NULL;
 
     return leaf;
-  }
-
-  if ((current_level == final_level) && (is_root_proc == 1)) {
-    int numprocs = (int)(pow(2, final_level) + 1e-9);
-
-#pragma omp critical
-    for (int i = 1; i < numprocs; i++) {
-      if (is_proc_free[i] == 1) {
-        is_proc_free[i] = 0;
-        MPI_Send(&len, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-        printf("sent chunk_length from mpi process 0 to mpi process %d, len "
-               "%d\n",
-               i, len);
-
-        kpoint *chunk = malloc(len * sizeof(kpoint));
-        copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
-
-        MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, i, 0, MPI_COMM_WORLD);
-        MPI_Send(extremes, NDIM * sizeof(kpoint), MPI_BYTE, i, 0,
-                 MPI_COMM_WORLD);
-        MPI_Send(&previous_axis, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-
-        printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n",
-               omp_get_thread_num(), i);
-
-        free(chunk);
-        break;
-      }
-    }
-
-    return NULL;
   }
 
   int chosen_axis = choose_splitting_dimension(extremes);
@@ -431,24 +410,56 @@ int choose_splitting_dimension(kpoint extremes[NDIM]) {
   return y_axis;
 }
 
-void get_dataset_extremes(kpoint **dataset, kpoint extremes[NDIM], int len,
+void get_dataset_extremes(kpoint **dataset_ptrs, kpoint extremes[NDIM], int len,
                           int chosen_axis) {
-  float_t max_value = dataset[0]->coords[chosen_axis];
+  float_t max_value = dataset_ptrs[0]->coords[chosen_axis];
   float_t min_value = max_value;
 #pragma omp parallel for reduction(max                                         \
                                    : max_value) reduction(min                  \
                                                           : min_value)         \
     schedule(static) proc_bind(close)
   for (int i = 1; i < len; i++) {
-    max_value = max_value > dataset[i]->coords[chosen_axis]
+    max_value = max_value > dataset_ptrs[i]->coords[chosen_axis]
                     ? max_value
-                    : dataset[i]->coords[chosen_axis];
-    min_value = min_value < dataset[i]->coords[chosen_axis]
+                    : dataset_ptrs[i]->coords[chosen_axis];
+    min_value = min_value < dataset_ptrs[i]->coords[chosen_axis]
                     ? min_value
-                    : dataset[i]->coords[chosen_axis];
+                    : dataset_ptrs[i]->coords[chosen_axis];
   }
   extremes[chosen_axis].coords[0] = min_value;
   extremes[chosen_axis].coords[1] = max_value;
+}
+
+void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
+                                  kpoint extremes[NDIM], int previous_axis,
+                                  int final_level, int *is_proc_free) {
+  //just an hack to compute a power with integer numbers
+  int numprocs = (int)(pow(2, final_level) + 1e-9); 
+
+  //we have to perform an atomic send inside a thread, searching for the first free process
+#pragma omp critical
+  for (int mpi_process = 1; mpi_process < numprocs; mpi_process++) {
+    if (is_proc_free[mpi_process] == 1) {
+      is_proc_free[mpi_process] = 0;
+      MPI_Send(&dataset_len, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
+      printf("sent chunk_length from mpi process 0 to mpi process %d, len "
+             "%d\n",
+             mpi_process, len);
+
+      kpoint *chunk = malloc(len * sizeof(kpoint));
+      copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
+
+      MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, mpi_process, 0, MPI_COMM_WORLD);
+      MPI_Send(extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_process, 0, MPI_COMM_WORLD);
+      MPI_Send(&previous_axis, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
+
+      printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n",
+             omp_get_thread_num(), mpi_process);
+
+      free(chunk);
+      break;
+    }
+  }
 }
 
 void copy_extremes(kpoint old_extremes[NDIM], kpoint new_extremes[NDIM]) {
