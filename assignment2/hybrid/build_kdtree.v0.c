@@ -183,13 +183,14 @@ int main(int argc, char *argv[]) {
     // receiving the dataset chunk that the root process has sent
     int recv_len;
     int recv_axis;
-    kpoint *recv_dataset = malloc(recv_len * sizeof(kpoint));
+    kpoint *recv_dataset;
     kpoint *recv_extremes = malloc(NDIM * sizeof(kpoint));
 
     int mpi_root_process = 0;
     MPI_Status status;
     MPI_Recv(&recv_len, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD, &status);
-
+      
+    recv_dataset = malloc(recv_len * sizeof(kpoint));
     MPI_Recv(recv_dataset, (recv_len) * sizeof(kpoint), MPI_BYTE, mpi_root_process,
              0, MPI_COMM_WORLD, &status);
 
