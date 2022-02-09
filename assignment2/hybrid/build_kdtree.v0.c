@@ -74,9 +74,6 @@ void copy_extremes(kpoint old_extremes[NDIM], kpoint new_extremes[NDIM]);
 void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
                                   kpoint extremes[NDIM], int previous_axis,
                                   int final_level, int *is_proc_free);
-void recv_dataset_from_root_process(int *recv_len, int *recv_axis,
-                                    kpoint *recv_dataset,
-                                    kpoint *recv_extremes);
 
 int main(int argc, char *argv[]) {
 
@@ -181,28 +178,27 @@ int main(int argc, char *argv[]) {
     free(dataset_ptrs);
   } else {
     // receiving the dataset chunk that the root process has sent
-    int *recv_len = malloc(sizeof(int));
-    int *recv_axis = malloc(sizeof(int));
+    int recv_len;
+    int recv_axis;
     kpoint *recv_dataset;
     kpoint *recv_extremes = malloc(NDIM * sizeof(kpoint));
 
-    // int mpi_root_process = 0;
-    // MPI_Status status;
-    // MPI_Recv(&recv_len, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD, &status);
-    //  
-    // recv_dataset = malloc(recv_len * sizeof(kpoint));
-    // MPI_Recv(recv_dataset, recv_len * sizeof(kpoint), MPI_BYTE, mpi_root_process,
-    //          0, MPI_COMM_WORLD, &status);
-    //
-    // MPI_Recv(recv_extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_root_process, 0,
-    //          MPI_COMM_WORLD, &status);
-    //
-    // MPI_Recv(&recv_axis, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD,
-    //          &status);
-    recv_dataset_from_root_process(recv_len, recv_axis, recv_dataset, recv_extremes);
+    int mpi_root_process = 0;
+    MPI_Status status;
+    MPI_Recv(&recv_len, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD, &status);
+     
+    recv_dataset = malloc(recv_len * sizeof(kpoint));
+    MPI_Recv(recv_dataset, recv_len * sizeof(kpoint), MPI_BYTE, mpi_root_process,
+             0, MPI_COMM_WORLD, &status);
 
-    kpoint **recv_dataset_ptrs = malloc((*recv_len) * sizeof(kpoint *));
-    get_dataset_ptrs(recv_dataset, recv_dataset_ptrs, *recv_len);
+    MPI_Recv(recv_extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_root_process, 0,
+             MPI_COMM_WORLD, &status);
+
+    MPI_Recv(&recv_axis, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD,
+             &status);
+
+    kpoint **recv_dataset_ptrs = malloc(recv_len * sizeof(kpoint *));
+    get_dataset_ptrs(recv_dataset, recv_dataset_ptrs, recv_len);
 
     struct kdnode *chunk_root;
 
@@ -213,8 +209,8 @@ int main(int argc, char *argv[]) {
 #pragma omp single nowait
     {
       int level = 0;
-      chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, *recv_len,
-                                *recv_axis, level);
+      chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len,
+                                recv_axis, level);
     }
 
     printf("i am mpi process %d, my chunk root node is %f,%f\n\n", my_rank,
@@ -474,24 +470,6 @@ void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
       break;
     }
   }
-}
-
-void recv_dataset_from_root_process(int *recv_len, int *recv_axis,
-                                    kpoint *recv_dataset,
-                                    kpoint *recv_extremes) {
-  int mpi_root_process = 0;
-  MPI_Status status;
-  MPI_Recv(recv_len, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD, &status);
-
-  recv_dataset = malloc((*recv_len) * sizeof(kpoint));
-  MPI_Recv(recv_dataset, (*recv_len) * sizeof(kpoint), MPI_BYTE, mpi_root_process,
-           0, MPI_COMM_WORLD, &status);
-
-  MPI_Recv(recv_extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_root_process, 0,
-           MPI_COMM_WORLD, &status);
-
-  MPI_Recv(recv_axis, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD,
-           &status);
 }
 
 void copy_extremes(kpoint old_extremes[NDIM], kpoint new_extremes[NDIM]) {
