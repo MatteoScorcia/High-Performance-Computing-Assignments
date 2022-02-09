@@ -7,16 +7,19 @@
 #include <time.h>
 
 #if defined(_OPENMP)
-#define CPU_TIME (clock_gettime( CLOCK_REALTIME, &ts ), (double)ts.tv_sec + \
-		  (double)ts.tv_nsec * 1e-9)
+#define CPU_TIME                                                               \
+  (clock_gettime(CLOCK_REALTIME, &ts),                                         \
+   (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9)
 
-#define CPU_TIME_th (clock_gettime( CLOCK_THREAD_CPUTIME_ID, &myts ), (double)myts.tv_sec +	\
-		     (double)myts.tv_nsec * 1e-9)
+#define CPU_TIME_th                                                            \
+  (clock_gettime(CLOCK_THREAD_CPUTIME_ID, &myts),                              \
+   (double)myts.tv_sec + (double)myts.tv_nsec * 1e-9)
 
 #else
 
-#define CPU_TIME (clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts ), (double)ts.tv_sec + \
-		  (double)ts.tv_nsec * 1e-9)
+#define CPU_TIME                                                               \
+  (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts),                               \
+   (double)ts.tv_sec + (double)ts.tv_nsec * 1e-9)
 #endif
 
 #if !defined(DOUBLE_PRECISION)
@@ -178,33 +181,33 @@ int main(int argc, char *argv[]) {
     free(dataset_ptrs);
   } else {
     // receiving the dataset chunk that the root process has sent
-//     int recv_len;
-//     int recv_axis;
-//     kpoint *recv_dataset = malloc(recv_len * sizeof(kpoint));
-//     kpoint *recv_extremes = malloc(NDIM * sizeof(kpoint));
-//
-//     recv_dataset_from_root_process(&recv_len, &recv_axis, recv_dataset,
-//                                    recv_extremes);
-// kpoint **recv_dataset_ptrs = malloc(recv_len * sizeof(kpoint *));
-//     get_dataset_ptrs(recv_dataset, recv_dataset_ptrs, recv_len);
-//
-//     struct kdnode *chunk_root;
-//
-//     printf("i am mpi process %d, start building my kd-tree..\n\n", my_rank);
-//
-// #pragma omp parallel shared(recv_dataset_ptrs, chunk_root)                     \
-//     firstprivate(recv_extremes, recv_axis, recv_len)
-// #pragma omp single nowait
-//     {
-//       int level = 0;
-      // chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len,
-      //                           recv_axis, level);
+    int recv_len;
+    int recv_axis;
+    kpoint *recv_dataset = malloc(recv_len * sizeof(kpoint));
+    kpoint *recv_extremes = malloc(NDIM * sizeof(kpoint));
+
+    recv_dataset_from_root_process(&recv_len, &recv_axis, recv_dataset, recv_extremes);
+
+    kpoint **recv_dataset_ptrs = malloc(recv_len * sizeof(kpoint *));
+    get_dataset_ptrs(recv_dataset, recv_dataset_ptrs, recv_len);
+
+    struct kdnode *chunk_root;
+
+    printf("i am mpi process %d, start building my kd-tree..\n\n", my_rank);
+
+#pragma omp parallel shared(recv_dataset_ptrs, chunk_root)                     \
+    firstprivate(recv_extremes, recv_axis, recv_len)
+#pragma omp single nowait
+    {
+      int level = 0;
+      chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len,
+                                recv_axis, level);
     }
 
-    // printf("i am mpi process %d, my chunk root node is %f,%f\n\n", my_rank,
-    //        chunk_root->split.coords[0], chunk_root->split.coords[1]);
-    // free(recv_dataset);
-    // free(recv_dataset_ptrs);
+    printf("i am mpi process %d, my chunk root node is %f,%f\n\n", my_rank,
+           chunk_root->split.coords[0], chunk_root->split.coords[1]);
+    free(recv_dataset);
+    free(recv_dataset_ptrs);
   }
 
   double telapsed = CPU_TIME - tstart;
@@ -467,13 +470,14 @@ void recv_dataset_from_root_process(int *recv_len, int *recv_axis,
   MPI_Status status;
   MPI_Recv(recv_len, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD, &status);
 
-  MPI_Recv(recv_dataset, (*recv_len) * sizeof(kpoint), MPI_BYTE,
-           mpi_root_process, 0, MPI_COMM_WORLD, &status);
+  MPI_Recv(recv_dataset, (*recv_len) * sizeof(kpoint), MPI_BYTE, mpi_root_process,
+           0, MPI_COMM_WORLD, &status);
 
   MPI_Recv(recv_extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_root_process, 0,
            MPI_COMM_WORLD, &status);
 
-  MPI_Recv(recv_axis, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD, &status);
+  MPI_Recv(recv_axis, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD,
+           &status);
 }
 
 void copy_extremes(kpoint old_extremes[NDIM], kpoint new_extremes[NDIM]) {
