@@ -310,7 +310,7 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
                                         int previous_axis, int current_level,
                                         int final_level, int is_root_proc,
                                         int *is_proc_free) {
-  if ((current_level == final_level) && (is_root_proc == 1)) {
+  if ((current_level == final_level) && (is_root_proc != 1)) {
     send_dataset_to_free_process(len, dataset_ptrs, extremes, previous_axis,
                                  final_level, is_proc_free);
 
