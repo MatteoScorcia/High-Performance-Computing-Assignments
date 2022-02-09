@@ -446,10 +446,10 @@ void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
              "%d\n",
              mpi_process, dataset_len);
 
-      kpoint *chunk = malloc(len * sizeof(kpoint));
-      copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
+      kpoint *chunk = malloc(dataset_len * sizeof(kpoint));
+      copy_dataset_from_ptrs(chunk, dataset_ptrs, dataset_len);
 
-      MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, mpi_process, 0, MPI_COMM_WORLD);
+      MPI_Send(chunk, dataset_len * sizeof(kpoint), MPI_BYTE, mpi_process, 0, MPI_COMM_WORLD);
       MPI_Send(extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_process, 0, MPI_COMM_WORLD);
       MPI_Send(&previous_axis, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
 
