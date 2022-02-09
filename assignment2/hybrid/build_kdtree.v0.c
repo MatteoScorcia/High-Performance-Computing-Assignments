@@ -202,7 +202,7 @@ int main(int argc, char *argv[]) {
     {
       int level = 0;
       // chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len,
-                                recv_axis, level);
+      //                           recv_axis, level);
     }
 
     // printf("i am mpi process %d, my chunk root node is %f,%f\n\n", my_rank,
