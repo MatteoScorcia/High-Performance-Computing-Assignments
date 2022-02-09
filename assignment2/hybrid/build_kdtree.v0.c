@@ -181,19 +181,18 @@ int main(int argc, char *argv[]) {
     free(dataset_ptrs);
   } else {
     // receiving the dataset chunk that the root process has sent
-    int recv_len;
-    int recv_axis;
-    kpoint *recv_dataset = malloc(recv_len * sizeof(kpoint));
-    kpoint *recv_extremes = malloc(NDIM * sizeof(kpoint));
-
-    recv_dataset_from_root_process(&recv_len, &recv_axis, recv_dataset,
-                                   recv_extremes);
-
-    kpoint **recv_dataset_ptrs = malloc(recv_len * sizeof(kpoint *));
-    get_dataset_ptrs(recv_dataset, recv_dataset_ptrs, recv_len);
-
-    struct kdnode *chunk_root;
-
+//     int recv_len;
+//     int recv_axis;
+//     kpoint *recv_dataset = malloc(recv_len * sizeof(kpoint));
+//     kpoint *recv_extremes = malloc(NDIM * sizeof(kpoint));
+//
+//     recv_dataset_from_root_process(&recv_len, &recv_axis, recv_dataset,
+//                                    recv_extremes);
+// kpoint **recv_dataset_ptrs = malloc(recv_len * sizeof(kpoint *));
+//     get_dataset_ptrs(recv_dataset, recv_dataset_ptrs, recv_len);
+//
+//     struct kdnode *chunk_root;
+//
     printf("i am mpi process %d, start building my kd-tree..\n\n", my_rank);
 
 #pragma omp parallel shared(recv_dataset_ptrs, chunk_root)                     \
