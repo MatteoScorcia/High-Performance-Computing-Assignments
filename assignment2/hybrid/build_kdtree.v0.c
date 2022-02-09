@@ -188,6 +188,7 @@ int main(int argc, char *argv[]) {
 
     recv_dataset_from_root_process(&recv_len, &recv_axis, recv_dataset, recv_extremes);
 
+    printf("%d %d\n", recv_len, recv_axis);
     kpoint **recv_dataset_ptrs = malloc(recv_len * sizeof(kpoint *));
     get_dataset_ptrs(recv_dataset, recv_dataset_ptrs, recv_len);
 
