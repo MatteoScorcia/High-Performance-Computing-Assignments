@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
         pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_ge_y_axis);
       }
     }
-    printf("pre-sorting done in %f [s]\n", CPU_TIME - sort_start);
+    printf("pre-sorting done in %f [s]\n\n", CPU_TIME - sort_start);
 
     // during the building of the tree, we want to perform an atomic scatter of
     // the dataset to the mpi processes when we reach the "final_level"
@@ -450,9 +450,6 @@ void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
     if (is_proc_free[mpi_process] == 1) {
       is_proc_free[mpi_process] = 0;
       MPI_Send(&dataset_len, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
-      printf("sent chunk_length from mpi process 0 to mpi process %d, len "
-             "%d\n",
-             mpi_process, dataset_len);
 
       kpoint *chunk = malloc(dataset_len * sizeof(kpoint));
       copy_dataset_from_ptrs(chunk, dataset_ptrs, dataset_len);
@@ -463,7 +460,7 @@ void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
                MPI_COMM_WORLD);
       MPI_Send(&previous_axis, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
 
-      printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n",
+      printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n\n",
              omp_get_thread_num(), mpi_process);
 
       free(chunk);
