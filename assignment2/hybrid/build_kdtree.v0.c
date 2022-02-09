@@ -186,20 +186,20 @@ int main(int argc, char *argv[]) {
     kpoint *recv_dataset;
     kpoint *recv_extremes = malloc(NDIM * sizeof(kpoint));
 
-    // int mpi_root_process = 0;
-    // MPI_Status status;
-    // MPI_Recv(&recv_len, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD, &status);
-    //   
-    // recv_dataset = malloc(recv_len * sizeof(kpoint));
-    // MPI_Recv(recv_dataset, (recv_len) * sizeof(kpoint), MPI_BYTE, mpi_root_process,
-    //          0, MPI_COMM_WORLD, &status);
-    //
-    // MPI_Recv(recv_extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_root_process, 0,
-    //          MPI_COMM_WORLD, &status);
-    //
-    // MPI_Recv(&recv_axis, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD,
-    //          &status);
-    recv_dataset_from_root_process(&recv_len, &recv_axis, recv_dataset, recv_extremes);
+    int mpi_root_process = 0;
+    MPI_Status status;
+    MPI_Recv(&recv_len, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD, &status);
+     
+    recv_dataset = malloc(recv_len * sizeof(kpoint));
+    MPI_Recv(recv_dataset, (recv_len) * sizeof(kpoint), MPI_BYTE, mpi_root_process,
+             0, MPI_COMM_WORLD, &status);
+
+    MPI_Recv(recv_extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_root_process, 0,
+             MPI_COMM_WORLD, &status);
+
+    MPI_Recv(&recv_axis, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD,
+             &status);
+    // recv_dataset_from_root_process(&recv_len, &recv_axis, recv_dataset, recv_extremes);
 
     kpoint **recv_dataset_ptrs = malloc(recv_len * sizeof(kpoint *));
     get_dataset_ptrs(recv_dataset, recv_dataset_ptrs, recv_len);
@@ -482,7 +482,7 @@ void recv_dataset_from_root_process(int *recv_len, int *recv_axis,
   int mpi_root_process = 0;
   MPI_Status status;
   MPI_Recv(recv_len, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD, &status);
-  printf("%d\n", *recv_len);
+
   recv_dataset = malloc((*recv_len) * sizeof(kpoint));
   MPI_Recv(recv_dataset, (*recv_len) * sizeof(kpoint), MPI_BYTE, mpi_root_process,
            0, MPI_COMM_WORLD, &status);
