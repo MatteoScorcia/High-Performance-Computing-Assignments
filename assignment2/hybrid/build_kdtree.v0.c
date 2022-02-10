@@ -464,7 +464,7 @@ void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
                MPI_COMM_WORLD);
       MPI_Send(&previous_axis, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
 
-      printf("sent chunk from mpi process 0, to mpi process %d in %f time\n\n",
+      printf("sent chunk from mpi process 0, to mpi process %d in %f [sec]\n\n",
              mpi_process, CPU_TIME - send_start);
 
       free(chunk);
