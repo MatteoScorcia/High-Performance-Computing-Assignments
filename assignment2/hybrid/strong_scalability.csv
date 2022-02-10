@@ -1,6 +1,6 @@
-#datapoints,#threads,#mpi processes,runtime
-100000000,16,2,240.741197    //pre-sorting in 97 seconds
-100000000,8,2,247.930726     //pre-sorting in 94 seconds
-100000000,4,2,245.142681     //pre-sorting in 92 seconds
-100000000,2,2,242.032365     //pre-sorting in 89 seconds
-100000000,1,2,238.856938     //pre-sorting in 86 seconds
+#datapoints,#threads,#mpi processes,total runtime [sec],pre-sorting runtime [sec]
+100000000,16,2,90.896591,13  
+100000000,8,2,90.536488,15      
+100000000,4,2,114.869877,24     
+100000000,2,2,187.080572,44        
+100000000,1,2,229.436245,86    

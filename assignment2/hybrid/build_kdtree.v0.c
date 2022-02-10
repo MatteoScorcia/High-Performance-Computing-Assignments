@@ -340,9 +340,7 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
 
   int chosen_axis = choose_splitting_dimension(extremes);
 
-#pragma omp parallel shared(dataset_ptrs)                                      \
-    firstprivate(chosen_axis, previous_axis, len)
-#pragma omp single nowait
+#pragma omp taskgroup
   {
     if (chosen_axis != previous_axis) {
       if (chosen_axis == x_axis) {

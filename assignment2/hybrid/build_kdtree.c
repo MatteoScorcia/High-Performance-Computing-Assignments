@@ -68,9 +68,12 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
                                         int is_root_proc, int *is_proc_free);
 int choose_splitting_dimension(kpoint extremes[NDIM]);
 kpoint *choose_splitting_point(kpoint **dataset_ptrs, int len, int chosen_axis);
-void get_dataset_extremes(kpoint **dataset, kpoint extremes[NDIM], int len,
+void get_dataset_extremes(kpoint **dataset_ptrs, kpoint extremes[NDIM], int len,
                           int axis);
 void copy_extremes(kpoint old_extremes[NDIM], kpoint new_extremes[NDIM]);
+void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
+                                  kpoint extremes[NDIM], int previous_axis,
+                                  int final_level, int *is_proc_free);
 
 int main(int argc, char *argv[]) {
 
@@ -87,8 +90,6 @@ int main(int argc, char *argv[]) {
   int my_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-  printf("MPI_THREAD specification provided is %d\n", *provided);
-
   tstart = CPU_TIME;
 
 #pragma omp parallel shared(nthreads)
@@ -96,7 +97,8 @@ int main(int argc, char *argv[]) {
 #pragma omp single
     {
       nthreads = omp_get_num_threads();
-      printf("I am mpi process %d and I have %d threads\n", my_rank, nthreads);
+      printf("I am mpi process %d and I have %d threads\n\n", my_rank,
+             nthreads);
     }
   }
 
@@ -126,8 +128,8 @@ int main(int argc, char *argv[]) {
 
     tstart = CPU_TIME;
 
-    printf("choosing splitting dimension..\n");
-    // min_value (index 0) and max value (index 1) in each dimension NDIM
+    // extremes[chosen_dimension] = {min_value, max_value} in each dimension
+    // NDIM
     kpoint extremes[NDIM];
     get_dataset_extremes(dataset_ptrs, extremes, len, x_axis);
     get_dataset_extremes(dataset_ptrs, extremes, len, y_axis);
@@ -135,7 +137,7 @@ int main(int argc, char *argv[]) {
     int chosen_axis = choose_splitting_dimension(extremes);
 
     double sort_start = CPU_TIME;
-    printf("starting pre-sorting..\n");
+    printf("starting pre-sorting..\n\n");
 #pragma omp parallel shared(dataset_ptrs) firstprivate(chosen_axis, len)
 #pragma omp single nowait
     {
@@ -145,10 +147,18 @@ int main(int argc, char *argv[]) {
         pqsort(dataset_ptrs, 0, len, compare_ge_y_axis, compare_ge_y_axis);
       }
     }
-    printf("pre-sorting done in %f [s]\n", CPU_TIME - sort_start);
+    printf("pre-sorting done in %f [s]\n\n", CPU_TIME - sort_start);
 
+    // during the building of the tree, we want to perform an atomic scatter of
+    // the dataset to the mpi processes when we reach the "final_level"
     int final_level = log2(numprocs);
 
+    // a variable that is needed to keep track of which process is still free
+    // during the atomic scatter
+    int is_proc_free[numprocs];
+    for (int i = 0; i < numprocs; i++) {
+      is_proc_free[i] = 1;
+    }
 
 #pragma omp parallel shared(dataset_ptrs, root, is_proc_free)                  \
     firstprivate(extremes, chosen_axis, len, final_level)
@@ -156,62 +166,61 @@ int main(int argc, char *argv[]) {
     {
       int current_level = 0, is_root_proc = 1;
       root = build_kdtree_until_level(dataset_ptrs, extremes, len, chosen_axis,
-                                      current_level, final_level, is_root_proc);
-      printf("mpi process %d finished build kd_tree until level %d\n", my_rank, final_level);
+                                      current_level, final_level, is_root_proc,
+                                      is_proc_free);
+      printf("finished build kd_tree until level %d\n\n", final_level);
     }
 
-    printf("mpi process %d has root node: (%f,%f)\n", my_rank,
+    printf("mpi process %d has root node is %f,%f\n\n", my_rank,
            root->split.coords[0], root->split.coords[1]);
 
-    int *chunk_sizes = malloc(numprocs * sizeof(int));
-    scatter_dataset_to_processes(dataset, final_level, chunk_sizes, numprocs);
-
-    free(chunk_sizes);
     free(dataset);
     free(dataset_ptrs);
   } else {
+    // receiving the dataset chunk that the root process has sent
     int recv_len;
+    int recv_axis;
+    kpoint *recv_dataset;
+    kpoint *recv_extremes = malloc(NDIM * sizeof(kpoint));
+
+    int mpi_root_process = 0;
     MPI_Status status;
+    MPI_Recv(&recv_len, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD, &status);
+     
+    recv_dataset = malloc(recv_len * sizeof(kpoint));
+    MPI_Recv(recv_dataset, recv_len * sizeof(kpoint), MPI_BYTE, mpi_root_process,
+             0, MPI_COMM_WORLD, &status);
 
-    MPI_Recv(&recv_len, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-    printf("mpi process %d received len %d\n", my_rank, recv_len);
-
-    kpoint *recv_dataset = malloc(recv_len * sizeof(kpoint));
-    MPI_Recv(recv_dataset, recv_len * sizeof(kpoint), MPI_BYTE, 0, 0,
+    MPI_Recv(recv_extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_root_process, 0,
              MPI_COMM_WORLD, &status);
+
+    MPI_Recv(&recv_axis, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD,
+             &status);
 
     kpoint **recv_dataset_ptrs = malloc(recv_len * sizeof(kpoint *));
     get_dataset_ptrs(recv_dataset, recv_dataset_ptrs, recv_len);
 
-    kpoint recv_extremes[NDIM] = {};
-    MPI_Recv(recv_extremes, NDIM * sizeof(kpoint), MPI_BYTE, 0, 0,
-             MPI_COMM_WORLD, &status);
-
-    int recv_axis;
-    MPI_Recv(&recv_axis, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
-
-    int level = 0;
     struct kdnode *chunk_root;
 
-    printf("i am mpi process %d, start building my kd-tree..\n", my_rank);
+    printf("i am mpi process %d, start building my kd-tree..\n\n", my_rank);
 
 #pragma omp parallel shared(recv_dataset_ptrs, chunk_root)                     \
     firstprivate(recv_extremes, recv_axis, recv_len)
 #pragma omp single nowait
     {
-      int current_level = 0;
+      int level = 0;
       chunk_root = build_kdtree(recv_dataset_ptrs, recv_extremes, recv_len,
-                                recv_axis, current_level);
+                                recv_axis, level);
     }
 
-    printf("i am mpi process %d, my chunk root node is %f,%f\n", my_rank,
+    printf("i am mpi process %d, my chunk root node is %f,%f\n\n", my_rank,
            chunk_root->split.coords[0], chunk_root->split.coords[1]);
     free(recv_dataset);
     free(recv_dataset_ptrs);
   }
 
   double telapsed = CPU_TIME - tstart;
-  printf("elapsed time of mpi process %d: %f\n", my_rank, telapsed);
+  printf("elapsed time of mpi process %d: %f\n\n", my_rank, telapsed);
 
   MPI_Finalize();
   return 0;
@@ -232,6 +241,7 @@ kpoint *generate_dataset(int len) {
 
 struct kdnode *build_kdtree(kpoint **dataset_ptrs, kpoint extremes[NDIM],
                             int len, int previous_axis, int level) {
+  // elementary condition to finish the recursion
   if (len == 1) {
     struct kdnode *leaf = malloc(sizeof(struct kdnode));
     leaf->axis = previous_axis;
@@ -242,10 +252,11 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, kpoint extremes[NDIM],
     return leaf;
   }
 
-  struct kdnode *node = malloc(sizeof(struct kdnode));
-
+  // choose the splitting dimension using the previous extremes of the dataset
   int chosen_axis = choose_splitting_dimension(extremes);
 
+  // sort the array of pointers if there is a change of chosen axis respect to
+  // previous chosen axis
 #pragma omp taskgroup
   {
     if (chosen_axis != previous_axis) {
@@ -257,7 +268,10 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, kpoint extremes[NDIM],
     }
   }
 
+  // take the median of ordered dataset
   kpoint *split_point = choose_splitting_point(dataset_ptrs, len, chosen_axis);
+
+  struct kdnode *node = malloc(sizeof(struct kdnode));
   node->axis = chosen_axis;
   node->split = *split_point;
 
@@ -278,7 +292,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, kpoint extremes[NDIM],
 
 #pragma omp task shared(left_points)                                           \
     firstprivate(extremes, len_left, chosen_axis,                              \
-                 level) if (len_left >= build_cutoff) mergeable untied
+                 level) if (len_left >= build_cutoff) priority(1) mergeable untied
     node->left =
         build_kdtree(left_points, extremes, len_left, chosen_axis, level + 1);
   }
@@ -293,7 +307,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, kpoint extremes[NDIM],
 
 #pragma omp task shared(right_points)                                          \
     firstprivate(extremes, len_right, chosen_axis,                             \
-                 level) if (len_right >= build_cutoff) mergeable untied
+                 level) if (len_right >= build_cutoff) priority(1) mergeable untied
   node->right =
       build_kdtree(right_points, extremes, len_right, chosen_axis, level + 1);
 
@@ -306,6 +320,14 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
                                         int previous_axis, int current_level,
                                         int final_level, int is_root_proc,
                                         int *is_proc_free) {
+  // condition to break the recursion and scatter to other processes
+  if ((current_level == final_level) && (is_root_proc != 1)) {
+    send_dataset_to_free_process(len, dataset_ptrs, extremes, previous_axis,
+                                 final_level, is_proc_free);
+
+    return NULL;
+  }
+
   if (len == 1) {
     struct kdnode *leaf = malloc(sizeof(struct kdnode));
     leaf->axis = previous_axis;
@@ -316,42 +338,9 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
     return leaf;
   }
 
-  if ((current_level == final_level) && (is_root_proc == 1)) {
-    int numprocs = (int)(pow(2, final_level) + 1e-9);
-
-#pragma omp critical
-    for (int i = 1; i < numprocs; i++) {
-      if (is_proc_free[i] == 1) {
-        is_proc_free[i] = 0;
-        MPI_Send(&len, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-        printf("sent chunk_length from mpi process 0 to mpi process %d, len "
-               "%d\n",
-               i, len);
-
-        kpoint *chunk = malloc(len * sizeof(kpoint));
-        copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
-
-        MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, i, 0, MPI_COMM_WORLD);
-        MPI_Send(extremes, NDIM * sizeof(kpoint), MPI_BYTE, i, 0,
-                 MPI_COMM_WORLD);
-        MPI_Send(&previous_axis, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-
-        printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n",
-               omp_get_thread_num(), i);
-
-        free(chunk);
-        break;
-      }
-    }
-
-    return NULL;
-  }
-
   int chosen_axis = choose_splitting_dimension(extremes);
 
-#pragma omp parallel shared(dataset_ptrs)                                      \
-    firstprivate(chosen_axis, previous_axis, len)
-#pragma omp single nowait
+#pragma omp taskgroup
   {
     if (chosen_axis != previous_axis) {
       if (chosen_axis == x_axis) {
@@ -371,37 +360,33 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
   kpoint **left_points, **right_points;
 
   int median_idx = ceil(len / 2.0) - 1;
-  int len_left = median_idx;              // length of the left points
-  int len_right = len - (median_idx + 1); // length of the right points
+  int len_left = median_idx;
+  int len_right = len - (median_idx + 1);
 
   if (len_left != 0) {
-    left_points = &dataset_ptrs[0]; // starting pointer of left_points
+    left_points = &dataset_ptrs[0];
 
-    // min value of chosen axis for left points
     extremes[chosen_axis].coords[0] = dataset_ptrs[0]->coords[chosen_axis];
-    // max value of chosen axis for left points
     extremes[chosen_axis].coords[1] =
         dataset_ptrs[len_left - 1]->coords[chosen_axis];
 
 #pragma omp task shared(left_points, is_root_proc, is_proc_free)               \
     firstprivate(extremes, len_left, chosen_axis, current_level,               \
-                 final_level) if (len_left >= build_cutoff) mergeable untied
+                 final_level) if (len_left >= build_cutoff) priority(1) mergeable untied
     node->left = build_kdtree_until_level(
         left_points, extremes, len_left, chosen_axis, current_level + 1,
         final_level, is_root_proc + 0, is_proc_free);
   }
 
-  right_points = &dataset_ptrs[median_idx]; // starting pointer of right_points
+  right_points = &dataset_ptrs[median_idx];
 
-  // min value of chosen axis for right points
   extremes[chosen_axis].coords[0] =
       dataset_ptrs[median_idx]->coords[chosen_axis];
-  // max value of chosen axis for right points
   extremes[chosen_axis].coords[1] = dataset_ptrs[len - 1]->coords[chosen_axis];
 
 #pragma omp task shared(right_points, is_root_proc, is_proc_free)              \
     firstprivate(extremes, len_right, chosen_axis, current_level,              \
-                 final_level) if (len_right >= build_cutoff) mergeable untied
+                 final_level) if (len_right >= build_cutoff) priority(1) mergeable untied
   node->right = build_kdtree_until_level(
       right_points, extremes, len_right, chosen_axis, current_level + 1,
       final_level, is_root_proc + 1, is_proc_free);
@@ -430,71 +415,56 @@ int choose_splitting_dimension(kpoint extremes[NDIM]) {
   return y_axis;
 }
 
-void get_dataset_extremes(kpoint **dataset, kpoint extremes[NDIM], int len,
+void get_dataset_extremes(kpoint **dataset_ptrs, kpoint extremes[NDIM], int len,
                           int chosen_axis) {
-  float_t max_value = dataset[0]->coords[chosen_axis];
+  float_t max_value = dataset_ptrs[0]->coords[chosen_axis];
   float_t min_value = max_value;
 #pragma omp parallel for reduction(max                                         \
                                    : max_value) reduction(min                  \
                                                           : min_value)         \
     schedule(static) proc_bind(close)
   for (int i = 1; i < len; i++) {
-    max_value = max_value > dataset[i]->coords[chosen_axis]
+    max_value = max_value > dataset_ptrs[i]->coords[chosen_axis]
                     ? max_value
-                    : dataset[i]->coords[chosen_axis];
-    min_value = min_value < dataset[i]->coords[chosen_axis]
+                    : dataset_ptrs[i]->coords[chosen_axis];
+    min_value = min_value < dataset_ptrs[i]->coords[chosen_axis]
                     ? min_value
-                    : dataset[i]->coords[chosen_axis];
+                    : dataset_ptrs[i]->coords[chosen_axis];
   }
   extremes[chosen_axis].coords[0] = min_value;
   extremes[chosen_axis].coords[1] = max_value;
 }
 
-void get_chunk_sizes(int dataset_len, int *chunk_sizes, int numprocs, int final_level, int level) {
-  int median = ceil(dataset_len / 2.0);
-  int len_left = median - 1;
-  int len_right = dataset_len - median;
+void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
+                                  kpoint extremes[NDIM], int previous_axis,
+                                  int final_level, int *is_proc_free) {
+  // just an hack to compute a power with integer numbers to retrieve numprocs
+  int numprocs = (int)(pow(2, final_level) + 1e-9);
 
-  printf("median is %d, level is %d\n", median, level);
-
-  if(level == final_level) {
-    for (int i = 0; i < numprocs; i++) {
-      if (chunk_sizes[i] == 0) {
-        chunk_sizes[i] = dataset_len;
-        break;
-      }
-    }
-    return;
-  }
-
-  get_chunk_sizes(len_left, chunk_sizes, numprocs, final_level, level+1);
-  get_chunk_sizes(len_right, chunk_sizes, numprocs, final_level, level+1);
-}
-
-void scatter_dataset_to_processes(kpoint *dataset, int dataset_len, int *chunk_sizes, int numprocs) {
-  int start_level=0;
-  get_chunk_sizes(dataset_len, chunk_sizes, numprocs, final_level, start_level);
-
+  // we have to perform an atomic send inside a thread, searching for the first
+  // free process
+#pragma omp critical
   for (int mpi_process = 1; mpi_process < numprocs; mpi_process++) {
-    MPI_Send(&len, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
-    printf("sent chunk_length from mpi process 0 to mpi process %d, len "
-           "%d\n",
-           mpi_process, len);
+    if (is_proc_free[mpi_process] == 1) {
+      is_proc_free[mpi_process] = 0;
+      MPI_Send(&dataset_len, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
 
-    kpoint *chunk = malloc(len * sizeof(kpoint));
-    copy_dataset_from_ptrs(chunk, dataset_ptrs, len);
+      kpoint *chunk = malloc(dataset_len * sizeof(kpoint));
+      copy_dataset_from_ptrs(chunk, dataset_ptrs, dataset_len);
 
-    MPI_Send(chunk, len * sizeof(kpoint), MPI_BYTE, mpi_process, 0, MPI_COMM_WORLD);
-    MPI_Send(extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_process, 0,
-             MPI_COMM_WORLD);
-    MPI_Send(&previous_axis, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
+      MPI_Send(chunk, dataset_len * sizeof(kpoint), MPI_BYTE, mpi_process, 0,
+               MPI_COMM_WORLD);
+      MPI_Send(extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_process, 0,
+               MPI_COMM_WORLD);
+      MPI_Send(&previous_axis, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
 
-    printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n",
-           omp_get_thread_num(), mpi_process);
+      printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n\n",
+             omp_get_thread_num(), mpi_process);
 
-    free(chunk);
+      free(chunk);
+      break;
+    }
   }
-
 }
 
 void copy_extremes(kpoint old_extremes[NDIM], kpoint new_extremes[NDIM]) {
@@ -638,13 +608,13 @@ void pqsort(kpoint **data, int start, int end,
       int mid_start = mid - start;
       if (mid_start > 0)
 #pragma omp task default(none) final(mid_start < task_cutoff) mergeable        \
-shared(data) firstprivate(start, mid, comparator, comparator_insort) untied
+shared(data) firstprivate(start, mid, comparator, comparator_insort) priority(100) untied
         pqsort(data, start, mid, comparator, comparator_insort);
 
       int end_mid = end - (mid + 1);
       if (end_mid)
 #pragma omp task default(none) final(end_mid < task_cutoff) mergeable shared(  \
-    data) firstprivate(mid, end, comparator, comparator_insort) untied
+    data) firstprivate(mid, end, comparator, comparator_insort) priority(100) untied
         pqsort(data, mid + 1, end, comparator, comparator_insort);
     }
   } break;
