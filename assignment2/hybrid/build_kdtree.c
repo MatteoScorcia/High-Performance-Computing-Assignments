@@ -34,6 +34,8 @@
 #define x_axis 0
 #define y_axis 1
 
+#define SEED 12341234
+
 typedef struct {
   float_t coords[NDIM];
 } kpoint;
@@ -227,7 +229,7 @@ int main(int argc, char *argv[]) {
 }
 
 kpoint *generate_dataset(int len) {
-  srand((unsigned int)time(NULL));
+  srand((unsigned int) SEED);
 
   kpoint *dataset = malloc(len * sizeof(kpoint));
   for (int i = 0; i < len; i++) {
