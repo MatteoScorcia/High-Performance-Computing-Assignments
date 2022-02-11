@@ -325,6 +325,8 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
                                         int *is_proc_free) {
   // condition to break the recursion and scatter to other processes
   if ((current_level == final_level) && (is_root_proc != 1)) {
+#pragma omp task shared(is_proc_free, dataset_ptrs, extremes)                  \
+    firstprivate(len, previous_axis, final_level)
     send_dataset_to_free_process(len, dataset_ptrs, extremes, previous_axis,
                                  final_level, is_proc_free);
 
