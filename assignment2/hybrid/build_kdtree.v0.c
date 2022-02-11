@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
 
     struct kdnode *chunk_root;
 
-    printf("I am mpi process %d, start building my kd-tree..\n\n", my_rank);
+    printf("I am mpi process %d, start building my kd-tree after %f [sec]\n\n", my_rank,CPU_TIME - tstart);
 
 #pragma omp parallel shared(recv_dataset_ptrs, chunk_root)                     \
     firstprivate(recv_extremes, recv_axis, recv_len)
