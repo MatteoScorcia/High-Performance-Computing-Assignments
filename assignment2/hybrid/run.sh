@@ -16,8 +16,7 @@ module load openmpi-4.1.1+gbu-9.3.0
 
 mpicc $CWD/build_kdtree.v0.c -fopenmp -lm -w -o $CWD/build_kdtree.v0
 
-
 for procs in "${MPI_PROCS[@]}"
 do
-  mpirun --map-by node:PE=$NUMTHREADS --mca btl ^openib --mca pml ucx -np $procs ./build_kdtree.v0 ${POINTS[@]}
+  mpirun --map-by node:PE=$NUMTHREADS --mca btl ^openib --mca pml ucx -np $procs ./build_kdtree.v0 ${POINTS[@]} >> out.txt
 done
