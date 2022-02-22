@@ -6,7 +6,7 @@ SRC_DIR := ./src
 all: build_kdtree
 
 build_kdtree:
-	$(CC) $(SRC_DIR)/$@.c -o $(BUILD_DIR)/$@.o
+	$(CC) $(SRC_DIR)/$@.c -fopenmp -lm -o $(BUILD_DIR)/$@.o
 	
 .PHONY: clean
 clean:
