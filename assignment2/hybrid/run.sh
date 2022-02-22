@@ -4,7 +4,7 @@
 
 CWD=/u/dssc/matteo/High-Performance-Computing-Assignments/assignment2/hybrid/
 
-POINTS=(10000000)
+POINTS=(2500000 5000000 10000000)
 NUMTHREADS=8
 MPI_PROCS=(1 2 4)
 
@@ -18,5 +18,5 @@ mpicc $CWD/build_kdtree.v0.c -fopenmp -lm -w -o $CWD/build_kdtree.v0
 
 for procs in "${MPI_PROCS[@]}"
 do
-  mpirun --map-by node:PE=$NUMTHREADS --mca btl ^openib --mca pml ucx -np $procs ./build_kdtree.v0 ${POINTS[@]} >> out.txt
+  mpirun --map-by node:PE=$NUMTHREADS --mca btl ^openib --mca pml ucx -np $procs $CWD/build_kdtree.v0 ${POINTS[@]} >> out.txt
 done

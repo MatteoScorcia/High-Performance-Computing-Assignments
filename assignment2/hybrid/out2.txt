@@ -1,0 +1,141 @@
+I am mpi process 0 and I have 8 threads
+
+len: 10000000
+starting pre-sorting..
+
+pre-sorting done in 1.237164 [s]
+
+finished build kd_tree until level 0
+
+mpi process 0 has root node is 0.009057,0.499913
+
+elapsed time of mpi process 0: 9.852742
+
+I am mpi process 0 and I have 8 threads
+
+len: 2500000
+starting pre-sorting..
+
+pre-sorting done in 0.259211 [s]
+
+finished build kd_tree until level 0
+
+mpi process 0 has root node is 0.499963,0.946268
+
+elapsed time of mpi process 0: 1.746487
+
+I am mpi process 1 and I have 8 threads
+
+I am mpi process 0 and I have 8 threads
+
+len: 5000000
+starting pre-sorting..
+
+pre-sorting done in 0.603657 [s]
+
+sent chunk from mpi process 0, to mpi process 1 in 0.103824 [sec]
+
+I am mpi process 1, start building my kd-tree after 0.873701 [sec]
+
+i am mpi process 1, my chunk root node is 0.499899,0.865638
+
+elapsed time of mpi process 1: 2.484957
+
+finished build kd_tree until level 1
+
+mpi process 0 has root node is 0.786195,0.499530
+
+elapsed time of mpi process 0: 2.984568
+
+I am mpi process 0 and I have 8 threads
+
+len: 5000000
+starting pre-sorting..
+
+pre-sorting done in 0.610331 [s]
+
+finished build kd_tree until level 0
+
+mpi process 0 has root node is 0.786195,0.499530
+
+elapsed time of mpi process 0: 4.473901
+
+I am mpi process 1 and I have 8 threads
+
+I am mpi process 0 and I have 8 threads
+
+len: 10000000
+starting pre-sorting..
+
+pre-sorting done in 1.259443 [s]
+
+sent chunk from mpi process 0, to mpi process 1 in 0.218988 [sec]
+
+I am mpi process 1, start building my kd-tree after 1.809137 [sec]
+
+i am mpi process 1, my chunk root node is 0.499934,0.797271
+
+elapsed time of mpi process 1: 4.752120
+
+finished build kd_tree until level 1
+
+mpi process 0 has root node is 0.009057,0.499913
+
+elapsed time of mpi process 0: 6.815026
+
+I am mpi process 0 and I have 8 threads
+
+len: 10000000
+starting pre-sorting..
+
+pre-sorting done in 1.298326 [s]
+
+finished build kd_tree until level 0
+
+mpi process 0 has root node is 0.009057,0.499913
+
+elapsed time of mpi process 0: 9.466155
+
+I am mpi process 2 and I have 8 threads
+
+I am mpi process 1 and I have 8 threads
+
+I am mpi process 3 and I have 8 threads
+
+I am mpi process 0 and I have 8 threads
+
+len: 10000000
+starting pre-sorting..
+
+pre-sorting done in 1.305810 [s]
+
+sent chunk from mpi process 0, to mpi process 1 in 0.118094 [sec]
+
+I am mpi process 1, start building my kd-tree after 3.904564 [sec]
+
+sent chunk from mpi process 0, to mpi process 2 in 0.113127 [sec]
+
+I am mpi process 2, start building my kd-tree after 4.017800 [sec]
+
+sent chunk from mpi process 0, to mpi process 3 in 0.115241 [sec]
+
+I am mpi process 3, start building my kd-tree after 4.132747 [sec]
+
+i am mpi process 1, my chunk root node is 0.360088,0.749861
+
+elapsed time of mpi process 1: 5.110678
+
+i am mpi process 2, my chunk root node is 0.963068,0.749995
+
+elapsed time of mpi process 2: 5.406043
+
+i am mpi process 3, my chunk root node is 0.514761,0.249927
+
+elapsed time of mpi process 3: 5.558288
+
+finished build kd_tree until level 2
+
+mpi process 0 has root node is 0.009057,0.499913
+
+elapsed time of mpi process 0: 6.302665
+
