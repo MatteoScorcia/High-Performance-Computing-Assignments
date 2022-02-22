@@ -1,4 +1,4 @@
-#datapoints,#threads,#mpi processes,total runtime,pre-sorting runtime,time to send a chunk
-100000000,4,2,92.538449,24,1.5     
-100000000,4,4,98.783033,24,0.7    
-100000000,4,8,99.985641,24,0.4
+#datapoints,#threads,#mpi processes,total runtime
+10000000,8,1,9.853
+10000000,8,2,6.815
+10000000,8,4,6.303

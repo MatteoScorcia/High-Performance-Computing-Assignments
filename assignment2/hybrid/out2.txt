@@ -10,6 +10,7 @@ finished build kd_tree until level 0
 mpi process 0 has root node is 0.009057,0.499913
 
 elapsed time of mpi process 0: 9.852742
+--------------------------------------
 
 I am mpi process 0 and I have 8 threads
 
@@ -23,6 +24,7 @@ finished build kd_tree until level 0
 mpi process 0 has root node is 0.499963,0.946268
 
 elapsed time of mpi process 0: 1.746487
+---------------------------------------
 
 I am mpi process 1 and I have 8 threads
 
@@ -46,6 +48,7 @@ finished build kd_tree until level 1
 mpi process 0 has root node is 0.786195,0.499530
 
 elapsed time of mpi process 0: 2.984568
+---------------------------------------
 
 I am mpi process 0 and I have 8 threads
 
@@ -59,6 +62,7 @@ finished build kd_tree until level 0
 mpi process 0 has root node is 0.786195,0.499530
 
 elapsed time of mpi process 0: 4.473901
+---------------------------------------
 
 I am mpi process 1 and I have 8 threads
 
@@ -82,6 +86,7 @@ finished build kd_tree until level 1
 mpi process 0 has root node is 0.009057,0.499913
 
 elapsed time of mpi process 0: 6.815026
+---------------------------------------
 
 I am mpi process 0 and I have 8 threads
 
@@ -95,6 +100,7 @@ finished build kd_tree until level 0
 mpi process 0 has root node is 0.009057,0.499913
 
 elapsed time of mpi process 0: 9.466155
+---------------------------------------
 
 I am mpi process 2 and I have 8 threads
 
