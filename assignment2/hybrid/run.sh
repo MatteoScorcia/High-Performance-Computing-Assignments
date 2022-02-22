@@ -14,9 +14,9 @@ export OMP_PLACES=sockets
 
 module load openmpi-4.1.1+gnu-9.3.0
 
-mpicc $CWD/build_kdtree.v0.c -fopenmp -lm -w -o $CWD/build_kdtree.v0
+mpicc $CWD/build_kdtree.c -fopenmp -lm -w -o $CWD/build_kdtree
 
 for procs in "${MPI_PROCS[@]}"
 do
-  mpirun --map-by node:PE=$NUMTHREADS --mca btl ^openib --mca pml ucx -np $procs $CWD/build_kdtree.v0 ${POINTS[@]} >> out.txt
+  mpirun --map-by node:PE=$NUMTHREADS --mca btl ^openib --mca pml ucx -np $procs $CWD/build_kdtree ${POINTS[@]} >> out.txt
 done

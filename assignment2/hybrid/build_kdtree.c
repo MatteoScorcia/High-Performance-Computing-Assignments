@@ -187,14 +187,15 @@ int main(int argc, char *argv[]) {
 
     int mpi_root_process = 0;
     MPI_Status status;
-    MPI_Recv(&recv_len, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD, &status);
-     
-    recv_dataset = malloc(recv_len * sizeof(kpoint));
-    MPI_Recv(recv_dataset, recv_len * sizeof(kpoint), MPI_BYTE, mpi_root_process,
-             0, MPI_COMM_WORLD, &status);
+    MPI_Recv(&recv_len, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD,
+             &status);
 
-    MPI_Recv(recv_extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_root_process, 0,
-             MPI_COMM_WORLD, &status);
+    recv_dataset = malloc(recv_len * sizeof(kpoint));
+    MPI_Recv(recv_dataset, recv_len * sizeof(kpoint), MPI_BYTE,
+             mpi_root_process, 0, MPI_COMM_WORLD, &status);
+
+    MPI_Recv(recv_extremes, NDIM * sizeof(kpoint), MPI_BYTE, mpi_root_process,
+             0, MPI_COMM_WORLD, &status);
 
     MPI_Recv(&recv_axis, 1, MPI_INT, mpi_root_process, 0, MPI_COMM_WORLD,
              &status);
@@ -204,7 +205,7 @@ int main(int argc, char *argv[]) {
 
     struct kdnode *chunk_root;
 
-    printf("i am mpi process %d, start building my kd-tree..\n\n", my_rank);
+    printf("I am mpi process %d, start building my kd-tree after %f [sec]\n\n", my_rank,CPU_TIME - tstart);
 
 #pragma omp parallel shared(recv_dataset_ptrs, chunk_root)                     \
     firstprivate(recv_extremes, recv_axis, recv_len)
@@ -229,7 +230,7 @@ int main(int argc, char *argv[]) {
 }
 
 kpoint *generate_dataset(int len) {
-  srand((unsigned int) SEED);
+  srand((unsigned int)SEED);
 
   kpoint *dataset = malloc(len * sizeof(kpoint));
   for (int i = 0; i < len; i++) {
@@ -294,7 +295,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, kpoint extremes[NDIM],
 
 #pragma omp task shared(left_points)                                           \
     firstprivate(extremes, len_left, chosen_axis,                              \
-                 level) if (len_left >= build_cutoff) priority(1) mergeable untied
+                 level) if (len_left >= build_cutoff) mergeable untied
     node->left =
         build_kdtree(left_points, extremes, len_left, chosen_axis, level + 1);
   }
@@ -309,7 +310,7 @@ struct kdnode *build_kdtree(kpoint **dataset_ptrs, kpoint extremes[NDIM],
 
 #pragma omp task shared(right_points)                                          \
     firstprivate(extremes, len_right, chosen_axis,                             \
-                 level) if (len_right >= build_cutoff) priority(1) mergeable untied
+                 level) if (len_right >= build_cutoff) mergeable untied
   node->right =
       build_kdtree(right_points, extremes, len_right, chosen_axis, level + 1);
 
@@ -324,6 +325,8 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
                                         int *is_proc_free) {
   // condition to break the recursion and scatter to other processes
   if ((current_level == final_level) && (is_root_proc != 1)) {
+#pragma omp task shared(is_proc_free, dataset_ptrs, extremes)                  \
+    firstprivate(len, previous_axis, final_level)
     send_dataset_to_free_process(len, dataset_ptrs, extremes, previous_axis,
                                  final_level, is_proc_free);
 
@@ -374,7 +377,7 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
 
 #pragma omp task shared(left_points, is_root_proc, is_proc_free)               \
     firstprivate(extremes, len_left, chosen_axis, current_level,               \
-                 final_level) if (len_left >= build_cutoff) priority(1) mergeable untied
+                 final_level) if (len_left >= build_cutoff) mergeable untied
     node->left = build_kdtree_until_level(
         left_points, extremes, len_left, chosen_axis, current_level + 1,
         final_level, is_root_proc + 0, is_proc_free);
@@ -388,7 +391,7 @@ struct kdnode *build_kdtree_until_level(kpoint **dataset_ptrs,
 
 #pragma omp task shared(right_points, is_root_proc, is_proc_free)              \
     firstprivate(extremes, len_right, chosen_axis, current_level,              \
-                 final_level) if (len_right >= build_cutoff) priority(1) mergeable untied
+                 final_level) if (len_right >= build_cutoff) mergeable untied
   node->right = build_kdtree_until_level(
       right_points, extremes, len_right, chosen_axis, current_level + 1,
       final_level, is_root_proc + 1, is_proc_free);
@@ -447,6 +450,9 @@ void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
   // free process
 #pragma omp critical
   for (int mpi_process = 1; mpi_process < numprocs; mpi_process++) {
+    struct timespec ts;
+    double send_start = CPU_TIME;
+
     if (is_proc_free[mpi_process] == 1) {
       is_proc_free[mpi_process] = 0;
       MPI_Send(&dataset_len, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
@@ -460,8 +466,8 @@ void send_dataset_to_free_process(int dataset_len, kpoint **dataset_ptrs,
                MPI_COMM_WORLD);
       MPI_Send(&previous_axis, 1, MPI_INT, mpi_process, 0, MPI_COMM_WORLD);
 
-      printf("sent chunk from mpi process 0, thread %d, to mpi process %d\n\n",
-             omp_get_thread_num(), mpi_process);
+      printf("sent chunk from mpi process 0, to mpi process %d in %f [sec]\n\n",
+             mpi_process, CPU_TIME - send_start);
 
       free(chunk);
       break;
@@ -610,13 +616,13 @@ void pqsort(kpoint **data, int start, int end,
       int mid_start = mid - start;
       if (mid_start > 0)
 #pragma omp task default(none) final(mid_start < task_cutoff) mergeable        \
-shared(data) firstprivate(start, mid, comparator, comparator_insort) priority(100) untied
+shared(data) firstprivate(start, mid, comparator, comparator_insort) untied
         pqsort(data, start, mid, comparator, comparator_insort);
 
       int end_mid = end - (mid + 1);
       if (end_mid)
 #pragma omp task default(none) final(end_mid < task_cutoff) mergeable shared(  \
-    data) firstprivate(mid, end, comparator, comparator_insort) priority(100) untied
+    data) firstprivate(mid, end, comparator, comparator_insort) untied
         pqsort(data, mid + 1, end, comparator, comparator_insort);
     }
   } break;
